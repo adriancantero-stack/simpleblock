@@ -980,9 +980,7 @@
       <button class="heart-toggle-btn" id="addToPlaylistBtn" onclick="addCurrentToPlaylistPrompt()" style="margin-left: 8px; display: none;" title="Adicionar à Playlist">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
       </button>
-      <button class="heart-toggle-btn" id="shareMobileBtn" onclick="shareCurrentTrack()" style="margin-left: 8px; display: none;" title="Compartilhar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-      </button>
+      <!-- Botão shareMobile removido por redundância com o botão da direita -->
     </div>
 
     <!-- Controles Centrais -->
@@ -1678,7 +1676,9 @@
       saveToHistory(trackItem);
       updateFavoriteButtonState(videoId);
       document.getElementById('addToPlaylistBtn').style.display = 'block';
-      document.getElementById('shareMobileBtn').style.display = 'block';
+
+      // Reclamar o gesto do usuário imediatamente (essencial para iOS Safari permitir autoplay)
+      silentAudio.play().catch(() => {});
 
       // Reseta o player híbrido para áudio nativo padrão (iOS agora também roda nativo perfeitamente sem o método load())
       activeEngine = 'audio';
@@ -2054,7 +2054,20 @@
       if (!pl) return;
       
       document.getElementById('playlistViewTitle').innerText = pl.name;
-      document.getElementById('playlistViewTrackCount').innerText = `${pl.tracks.length} música${pl.tracks.length !== 1 ? 's' : ''}`;
+      
+      let totalSeconds = 0;
+      pl.tracks.forEach(t => {
+        if (t.lengthSeconds) {
+          totalSeconds += parseInt(t.lengthSeconds) || 0;
+        } else if (t.durationText) {
+          const parts = t.durationText.split(':').reverse();
+          if (parts[0]) totalSeconds += parseInt(parts[0]) || 0;
+          if (parts[1]) totalSeconds += (parseInt(parts[1]) || 0) * 60;
+          if (parts[2]) totalSeconds += (parseInt(parts[2]) || 0) * 3600;
+        }
+      });
+      const durationStr = totalSeconds > 0 ? ` • ${formatTime(totalSeconds)}` : '';
+      document.getElementById('playlistViewTrackCount').innerText = `${pl.tracks.length} música${pl.tracks.length !== 1 ? 's' : ''}${durationStr}`;
       
       const cover = document.getElementById('playlistViewCover');
       let thumbUrl = '';
@@ -2115,12 +2128,16 @@
         row.onmouseout = () => row.style.background = 'rgba(255, 255, 255, 0.02)';
         row.onclick = () => playMusic(item, cleanTitle, items);
         
+        const duration = item.durationText || (item.lengthSeconds ? formatTime(item.lengthSeconds) : '');
+        const durationHtml = duration ? `<div style="font-size: 13px; color: var(--text-muted); margin-left: 12px; font-variant-numeric: tabular-nums;">${duration}</div>` : '';
+        
         row.innerHTML = `
           <div style="color: var(--text-muted); font-size: 14px; width: 24px; text-align: center;">${index + 1}</div>
           <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
             <span style="font-size: 14px; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cleanTitle}</span>
             <span style="font-size: 13px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${author}</span>
           </div>
+          ${durationHtml}
         `;
         containerElement.appendChild(row);
       });
