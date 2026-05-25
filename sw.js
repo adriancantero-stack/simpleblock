@@ -1,21 +1,43 @@
-const CACHE_NAME = 'simpleblock-v2';
-const FILTERS_URL = '/filters.json';
+const CACHE_NAME = 'simpleblock-v3';
+const FILTERS_URL = 'filters.json';
 let blockedPatterns = [];
 
 async function loadFilters() {
   try {
     const res = await fetch(FILTERS_URL, { cache: 'no-store' });
-    if (res.ok) blockedPatterns = await res.json();
+    if (res.ok) {
+      blockedPatterns = await res.json();
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(FILTERS_URL, res.clone());
+    }
   } catch {
+    try {
+      const cachedRes = await caches.match(FILTERS_URL);
+      if (cachedRes) {
+        blockedPatterns = await cachedRes.json();
+        return;
+      }
+    } catch {}
     blockedPatterns = ["doubleclick.net","googlesyndication.com","youtube.com/api/stats/ads","adserver.","tracking.","analytics.","pixel.","adservice.","s.youtube.com"];
   }
 }
+
 function isBlocked(url) { return blockedPatterns.some(p => url.includes(p)); }
 
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => k !== CACHE_NAME && caches.delete(k)))));
+self.addEventListener('install', e => {
+  self.skipWaiting();
+  e.waitUntil(loadFilters());
 });
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    Promise.all([
+      caches.keys().then(keys => Promise.all(keys.map(k => k !== CACHE_NAME && caches.delete(k)))),
+      loadFilters()
+    ])
+  );
+});
+
 self.addEventListener('fetch', e => {
   if (isBlocked(e.request.url)) { e.respondWith(new Response('', { status: 204 })); return; }
   if (e.request.destination === 'document' || e.request.destination === 'image') {
@@ -27,5 +49,7 @@ self.addEventListener('fetch', e => {
   }
   e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
 });
-setInterval(loadFilters, 12*60*60*1000);
+
+// Load filters on service worker waking up
 loadFilters();
+

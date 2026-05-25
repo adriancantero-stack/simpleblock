@@ -7,6 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>SimpleBlock</title>
+  <link rel="manifest" href="manifest.json">
   <style>
     :root {
       --bg: #000000;
@@ -151,6 +152,133 @@
     .spinner { width:36px; height:36px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; }
     @keyframes spin { to{transform:rotate(360deg)} }
 
+    /* ================= BROWSER VIEW (INTEGRATED IFRAME) ================= */
+    .browser-view {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+    }
+    .browser-view.active {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    .browser-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      padding-top: calc(12px + var(--safe-top));
+      background: rgba(15, 15, 15, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      gap: 16px;
+    }
+
+    .browser-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: var(--surface);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+    .browser-btn:hover {
+      background: var(--surface-hover);
+    }
+    .browser-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.5;
+    }
+
+    .browser-address-bar {
+      flex: 1;
+      max-width: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+    .browser-address-bar .lock-icon {
+      width: 12px;
+      height: 12px;
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 2.5;
+    }
+    .browser-address-bar span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .browser-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .browser-action-btn {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      background: var(--surface);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .browser-action-btn:hover {
+      background: var(--surface-hover);
+    }
+    .browser-action-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .iframe-wrapper {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background: #000;
+    }
+    .iframe-wrapper iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #000;
+    }
+
     /* ================= RESPONSIVIDADE ================= */
     /* Mobile (< 768px) */
     @media (max-width: 767px) {
@@ -160,6 +288,9 @@
       .feature-icon { margin-bottom: 0; }
       body { padding: 16px; padding-top: calc(16px + var(--safe-top)); padding-bottom: calc(16px + var(--safe-bottom)); }
       .container { max-width: 100%; }
+      .browser-btn span { display: none; }
+      .browser-btn { padding: 8px; border-radius: 12px; }
+      .browser-address-bar { max-width: 180px; }
     }
 
     /* Desktop (768px - 1400px) */
@@ -245,6 +376,28 @@
     </div>
   </div>
 
+  <!-- Browser view para carregar o proxy de forma integrada -->
+  <div class="browser-view" id="browserView">
+    <div class="browser-header">
+      <button class="browser-btn focusable" onclick="exitBrowser()" aria-label="Voltar para a Home">
+        <svg viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Início</span>
+      </button>
+      <div class="browser-address-bar">
+        <svg class="lock-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span id="activeUrl">youtube.com</span>
+      </div>
+      <div class="browser-actions">
+        <button class="browser-action-btn focusable" onclick="reloadBrowser()" aria-label="Recarregar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="iframe-wrapper">
+      <iframe id="browserIframe" name="browserIframe" referrerpolicy="no-referrer" allowfullscreen></iframe>
+    </div>
+  </div>
+
   <script>
     // Detecção TV
     const isTV = /smart-tv|smarttv|googletv|hdmi|netcast|appletv|web0s|webos/i.test(navigator.userAgent) || window.innerWidth > 1400;
@@ -256,10 +409,55 @@
       const isUrl = val.includes('.') && !val.includes(' ');
       const target = isUrl ? (val.startsWith('http') ? val : `https://${val}`) : `https://www.youtube.com/results?search_query=${encodeURIComponent(val)}`;
       const proxyUrl = `https://simpleblock-proxy.adrian-cantero1.workers.dev/proxy/${encodeURIComponent(target)}`;
+      
       document.getElementById('loading').classList.add('active');
-      window.location.href = proxyUrl;
+      
+      let displayUrl = 'youtube.com';
+      try {
+        if (isUrl) {
+          const cleanVal = val.startsWith('http') ? val : `https://${val}`;
+          const parsed = new URL(cleanVal);
+          displayUrl = parsed.hostname.replace('www.', '');
+        } else {
+          displayUrl = `Busca: "${val}"`;
+        }
+      } catch {
+        displayUrl = val;
+      }
+      
+      document.getElementById('activeUrl').innerText = displayUrl;
+      
+      // Carregar iframe
+      const iframe = document.getElementById('browserIframe');
+      iframe.src = proxyUrl;
+      
+      // Mostrar navegador
+      document.getElementById('browserView').classList.add('active');
     }
+    
     function handleKeyPress(e) { if (e.key === 'Enter') navigate(); }
+
+    function exitBrowser() {
+      document.getElementById('browserView').classList.remove('active');
+      document.getElementById('browserIframe').src = 'about:blank';
+      document.getElementById('urlInput').value = '';
+      document.getElementById('urlInput').focus();
+    }
+
+    function reloadBrowser() {
+      document.getElementById('loading').classList.add('active');
+      const iframe = document.getElementById('browserIframe');
+      iframe.src = iframe.src;
+    }
+
+    // Event listener para monitorar o carregamento do iframe e desativar o spinner
+    window.addEventListener('DOMContentLoaded', () => {
+      const iframe = document.getElementById('browserIframe');
+      iframe.addEventListener('load', () => {
+        document.getElementById('loading').classList.remove('active');
+      });
+      document.getElementById('urlInput').focus();
+    });
 
     // PWA
     let deferredPrompt;
@@ -276,10 +474,7 @@
     }
 
     // Service Worker
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(console.error);
-
-    // Foco automático
-    window.addEventListener('load', () => document.getElementById('urlInput').focus());
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(console.error);
   </script>
 </body>
 </html>
