@@ -561,9 +561,13 @@
       for (const instance of INVIDIOUS_INSTANCES) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 segundos de timeout por tentativa
+          const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos
           
-          const res = await fetch(`${instance}/api/v1/search?q=${encodeURIComponent(query)}&type=video`, { signal: controller.signal });
+          const searchUrl = `${instance}/api/v1/search?q=${encodeURIComponent(query)}&type=video`;
+          // ROTEIA A BUSCA ATRAVÉS DO PROXY CLOUDFLARE WORKER PARA EVITAR BLOQUEIO DE CORS!
+          const proxyUrl = `https://simpleblock-proxy.adrian-cantero1.workers.dev/proxy/${encodeURIComponent(searchUrl)}`;
+          
+          const res = await fetch(proxyUrl, { signal: controller.signal });
           clearTimeout(timeoutId);
           
           if (res.ok) {

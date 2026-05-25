@@ -44,10 +44,18 @@ self.addEventListener('fetch', e => {
     e.respondWith(fetch(e.request).then(res => {
       if (res.ok) { const c = res.clone(); caches.open(CACHE_NAME).then(cache => cache.put(e.request, c)); }
       return res;
-    }).catch(() => caches.match(e.request)));
+    }).catch(async () => {
+      const cached = await caches.match(e.request);
+      if (cached) return cached;
+      return new Response('Offline', { status: 503, statusText: 'Offline' });
+    }));
     return;
   }
-  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+  e.respondWith(fetch(e.request).catch(async () => {
+    const cached = await caches.match(e.request);
+    if (cached) return cached;
+    return new Response('Network Error', { status: 503, statusText: 'Network Error' });
+  }));
 });
 
 // Load filters on service worker waking up
