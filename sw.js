@@ -1,4 +1,4 @@
-const CACHE_NAME = 'simpleblock-v4';
+const CACHE_NAME = 'livreplay-v1';
 const FILTERS_URL = 'filters.json';
 let blockedPatterns = [];
 

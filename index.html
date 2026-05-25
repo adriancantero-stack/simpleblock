@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>SimpleBlock</title>
+  <title>LivrePlay</title>
   <link rel="manifest" href="manifest.json">
   <style>
     :root {
@@ -734,7 +734,7 @@
       </div>
     </div>
 
-    <h1>SimpleBlock</h1>
+    <h1>LivrePlay</h1>
     <p class="subtitle">Simples. Rápido. Sem anúncios.</p>
 
     <div class="search-container">
@@ -1001,8 +1001,8 @@
       // Encontra os detalhes do vídeo nos resultados atuais ou no histórico/favoritos
       let videoItem = currentSearchResults.find(v => v.videoId === videoId);
       if (!videoItem) {
-        const history = JSON.parse(localStorage.getItem('simpleblock_history') || '[]');
-        const favorites = JSON.parse(localStorage.getItem('simpleblock_favorites') || '[]');
+        const history = JSON.parse(localStorage.getItem('livreplay_history') || '[]');
+        const favorites = JSON.parse(localStorage.getItem('livreplay_favorites') || '[]');
         videoItem = history.find(v => v.videoId === videoId) || favorites.find(v => v.videoId === videoId);
       }
       
@@ -1041,18 +1041,18 @@
     
     // === LÓGICA DE HISTÓRICO E FAVORITOS ===
     function saveToHistory(video) {
-      let history = JSON.parse(localStorage.getItem('simpleblock_history') || '[]');
+      let history = JSON.parse(localStorage.getItem('livreplay_history') || '[]');
       history = history.filter(v => v.videoId !== video.videoId);
       history.unshift(video);
       if (history.length > 20) history.pop();
-      localStorage.setItem('simpleblock_history', JSON.stringify(history));
+      localStorage.setItem('livreplay_history', JSON.stringify(history));
       renderUserSections();
     }
 
     function toggleFavoriteCurrent() {
       if (!currentlyPlayingVideo) return;
       const video = currentlyPlayingVideo;
-      let favorites = JSON.parse(localStorage.getItem('simpleblock_favorites') || '[]');
+      let favorites = JSON.parse(localStorage.getItem('livreplay_favorites') || '[]');
       const isFav = favorites.some(v => v.videoId === video.videoId);
       
       const btn = document.getElementById('favoriteToggleBtn');
@@ -1064,7 +1064,7 @@
         btn.classList.add('favorited');
       }
       
-      localStorage.setItem('simpleblock_favorites', JSON.stringify(favorites));
+      localStorage.setItem('livreplay_favorites', JSON.stringify(favorites));
       renderUserSections();
     }
 
@@ -1093,8 +1093,8 @@
     }
 
     function renderUserSections() {
-      const history = JSON.parse(localStorage.getItem('simpleblock_history') || '[]');
-      const favorites = JSON.parse(localStorage.getItem('simpleblock_favorites') || '[]');
+      const history = JSON.parse(localStorage.getItem('livreplay_history') || '[]');
+      const favorites = JSON.parse(localStorage.getItem('livreplay_favorites') || '[]');
       
       const hasContent = history.length > 0 || favorites.length > 0;
       const container = document.getElementById('userSections');
