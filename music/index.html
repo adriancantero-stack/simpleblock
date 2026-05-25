@@ -1072,6 +1072,7 @@
     ];
 
     let currentSearchResults = [];
+    let currentQueue = [];
     let currentlyPlayingVideo = null;
     let currentInvidiousInstance = 'https://yewtu.be';
     let currentAudioStreamUrl = null;
@@ -1604,7 +1605,7 @@
         
         const card = document.createElement('div');
         card.className = 'music-card';
-        card.onclick = () => playMusic(item, cleanTitle);
+        card.onclick = () => playMusic(item, cleanTitle, items);
         
         card.innerHTML = `
           <div class="art-wrapper">
@@ -1623,7 +1624,13 @@
     }
 
     // Tocar a Música Escolhida
-    function playMusic(item, cleanTitle) {
+    function playMusic(item, cleanTitle, queue = null) {
+      if (queue) {
+        currentQueue = queue;
+      } else if (currentQueue.length === 0 && currentSearchResults.length > 0) {
+        currentQueue = currentSearchResults;
+      }
+      
       const videoId = item.videoId;
       activeTrackId = videoId; // Define o ID da música ativa de forma síncrona instantânea!
       
@@ -1742,12 +1749,17 @@
     });
 
     function playNextRecommended() {
-      if (!currentlyPlayingVideo) return;
-      const related = currentSearchResults.filter(item => item.videoId !== currentlyPlayingVideo.videoId);
-      if (related.length > 0) {
-        // Pega a próxima da lista atual
-        const nextTrack = related[0];
-        playMusic(nextTrack);
+      if (!currentlyPlayingVideo || currentQueue.length === 0) return;
+      
+      const currentIndex = currentQueue.findIndex(item => item.videoId === currentlyPlayingVideo.videoId);
+      
+      if (currentIndex !== -1 && currentIndex < currentQueue.length - 1) {
+        // Toca a próxima da fila
+        const nextTrack = currentQueue[currentIndex + 1];
+        playMusic(nextTrack, null, currentQueue);
+      } else {
+        // Chegou ao fim da fila ou não achou. Se quiser pode reiniciar:
+        // playMusic(currentQueue[0], null, currentQueue);
       }
     }
 
