@@ -818,7 +818,7 @@
       const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&enablejsapi=1&mute=0&rel=0&modestbranding=1&playsinline=1`;
       document.getElementById('youtubeIframe').src = embedUrl;
       console.log('Iniciada reprodução de resiliência total via Iframe oculto:', videoId);
-      setPlayState(true);
+      // O estado visual do play/pause será atualizado automaticamente pelo ouvinte de eventos onStateChange do Iframe
     }
 
     function sendIframeCommand(func, args = []) {
@@ -1254,38 +1254,19 @@
       updateFavoriteButtonState(videoId);
       document.getElementById('addToPlaylistBtn').style.display = 'block';
 
-      // Detecção de iOS (iPhone, iPad) para usar player híbrido síncrono ultra-estável e contornar restrições CORS/Autoplay/Redirection
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      // Reseta o player híbrido para áudio nativo padrão (iOS agora também roda nativo perfeitamente sem o método load())
+      activeEngine = 'audio';
+      document.getElementById('youtubeIframe').src = 'about:blank';
 
-      if (isIOS) {
-        activeEngine = 'iframe';
-        
-        // Carrega o iframe de forma síncrona diretamente no clique para burlar bloqueio de autoplay no iOS Safari (com playsinline=1 obrigatório)
-        const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&enablejsapi=1&mute=0&rel=0&modestbranding=1&playsinline=1`;
-        document.getElementById('youtubeIframe').src = embedUrl;
-        
-        // Toca o áudio silencioso síncrono em loop para permitir a reprodução continuar em segundo plano (background playback)
-        silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA';
-        silentAudio.loop = true;
-        silentAudio.play().catch(() => {});
-        
-        document.getElementById('spinner').style.display = 'none';
-        setPlayState(true);
-      } else {
-        // Reseta o player híbrido para áudio nativo padrão
-        activeEngine = 'audio';
-        document.getElementById('youtubeIframe').src = 'about:blank';
+      // Pre-aquecimento nativo síncrono para garantir permissão de reprodução de mídia
+      silentAudio.play().catch(() => {});
 
-        // Pre-aquecimento nativo síncrono para garantir permissão de reprodução de mídia
-        silentAudio.play().catch(() => {});
-
-        // Buscar a stream nativa
-        prefetchAudioStream(videoId).then(() => {
-          if (activeTrackId === videoId) {
-            document.getElementById('spinner').style.display = 'none';
-          }
-        });
-      }
+      // Buscar a stream nativa
+      prefetchAudioStream(videoId).then(() => {
+        if (activeTrackId === videoId) {
+          document.getElementById('spinner').style.display = 'none';
+        }
+      });
 
       // Atualizar o player inferior
       document.getElementById('playingThumb').src = thumb;
