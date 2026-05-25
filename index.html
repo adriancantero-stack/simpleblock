@@ -6,55 +6,47 @@
   <meta name="theme-color" content="#0f0f0f">
   <title>SimpleBlock</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
-    body { background: #0f0f0f; color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-    .container { width: 100%; max-width: 600px; text-align: center; }
-    input { width: 100%; padding: 15px; border: none; border-radius: 8px; background: #1f1f1f; color: #fff; font-size: 16px; margin-bottom: 10px; }
-    button { width: 100%; padding: 15px; border: none; border-radius: 8px; background: #3ea6ff; color: #000; font-size: 16px; font-weight: bold; cursor: pointer; }
-    button:active { transform: scale(0.98); }
-    .status { margin-top: 30px; padding: 20px; background: #1a1a1a; border-radius: 12px; }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #0f0f0f; color: #fff; min-height: 100vh; padding: 20px; }
+    .header { display: flex; gap: 10px; margin-bottom: 30px; }
+    input { flex: 1; padding: 12px 16px; border: none; border-radius: 8px; background: #1f1f1f; color: #fff; font-size: 16px; }
+    button { padding: 12px 24px; border: none; border-radius: 8px; background: #3ea6ff; color: #000; font-weight: 600; cursor: pointer; }
+    .status { text-align: center; padding: 40px 20px; background: #1a1a1a; border-radius: 12px; max-width: 400px; margin: 0 auto; }
     .badge { background: #22c55e; color: #000; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block; margin-bottom: 15px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <input type="text" id="url" placeholder="youtube.com" value="youtube.com">
-    <button onclick="navigate()">Abrir YouTube</button>
-    
-    <div class="status">
-      <div class="badge">✅ ATIVO</div>
-      <p style="margin: 10px 0;"><b>Bloqueio de anúncios habilitado</b></p>
-      <p style="font-size: 14px; color: #888;">Proxy: simpleblock-proxy.adrian-cantero1.workers.dev</p>
-    </div>
+  <div class="header">
+    <input type="text" id="urlInput" placeholder="youtube.com" value="youtube.com" onkeypress="handleKeyPress(event)">
+    <button onclick="navigate()">Abrir</button>
+  </div>
+  
+  <div class="status">
+    <div class="badge">✅ ATIVO</div>
+    <p style="margin-bottom: 10px;"><b>Bloqueio de anúncios habilitado</b></p>
+    <p style="font-size: 14px; color: #888;">Proxy Cloudflare ativo</p>
   </div>
 
   <script>
-    function navigate() {
-      const val = document.getElementById('url').value.trim();
-      if (!val) {
-        alert('Digite uma URL!');
-        return;
+    function handleKeyPress(event) {
+      if (event.key === 'Enter') {
+        navigate();
       }
+    }
+    
+    function navigate() {
+      const input = document.getElementById('urlInput');
+      const val = input.value.trim();
       
-      console.log('Navegando para:', val);
+      if (!val) return;
       
       const isUrl = val.includes('.') && !val.includes(' ');
       const target = isUrl ? (val.startsWith('http') ? val : `https://${val}`) 
                            : `https://www.youtube.com/results?search_query=${encodeURIComponent(val)}`;
       
-      console.log('Target:', target);
-      
       const proxyUrl = `https://simpleblock-proxy.adrian-cantero1.workers.dev/proxy/${encodeURIComponent(target)}`;
       
-      console.log('Proxy URL:', proxyUrl);
-      alert('Indo para: ' + proxyUrl);
-      
       window.location.href = proxyUrl;
-    }
-    
-    // Registrar Service Worker (opcional)
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error:', err));
     }
   </script>
 </body>
