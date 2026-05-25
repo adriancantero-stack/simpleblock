@@ -542,43 +542,74 @@
   </div>
 
   <script>
-    // Rotação de instâncias públicas e ativas da API do Invidious (CORS-friendly)
-    const INVIDIOUS_INSTANCES = [
-      'https://inv.nadeko.net',
-      'https://invidious.nerdvpn.de',
-      'https://invidious.no-logs.com',
+    // Lista de fallback de instâncias Invidious que costumam suportar CORS e buscas direta
+    const FALLBACK_INSTANCES = [
+      'https://inv.thepixora.com',
+      'https://invidious.projectsegfau.lt',
+      'https://yewtu.be',
       'https://invidious.lunar.icu',
-      'https://invidious.io.lol',
-      'https://yewtu.be'
+      'https://invidious.privacydev.net'
     ];
 
     // Detecção Smart TV
     const isTV = /smart-tv|smarttv|googletv|hdmi|netcast|appletv|web0s|webos/i.test(navigator.userAgent) || window.innerWidth > 1400;
     if (isTV) document.body.classList.add('tv-mode');
 
-    // Executa busca sequencial automática nas instâncias saudáveis até encontrar uma ativa
+    // Executa busca sequencial automática com auto-recuperação dinâmica e CORS direto (sem proxy)
     async function fetchSearch(query) {
-      for (const instance of INVIDIOUS_INSTANCES) {
+      let instancesToTry = [...FALLBACK_INSTANCES];
+      
+      // Tenta obter instâncias dinâmicas e saudáveis do registro oficial Invidious
+      try {
+        const res = await fetch('https://api.invidious.io/instances.json');
+        if (res.ok) {
+          const instancesJson = await res.json();
+          const dynamicInstances = [];
+          for (const [name, info] of instancesJson) {
+            if (info.type === 'https' && info.api && (info.cors || info.uri)) {
+              const uri = info.uri || `https://${name}`;
+              if (!dynamicInstances.includes(uri)) {
+                dynamicInstances.push(uri);
+              }
+            }
+          }
+          // Prioriza as dinâmicas mas mantém as de fallback
+          instancesToTry = [...new Set([...dynamicInstances, ...FALLBACK_INSTANCES])];
+        }
+      } catch (e) {
+        console.warn('Não foi possível carregar instâncias dinâmicas, usando lista estática:', e);
+      }
+      
+      console.log('Tentando buscar em instâncias:', instancesToTry);
+      
+      let lastError = null;
+      for (const instance of instancesToTry) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos
+          const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 segundos
           
           const searchUrl = `${instance}/api/v1/search?q=${encodeURIComponent(query)}&type=video`;
-          // ROTEIA A BUSCA ATRAVÉS DO PROXY CLOUDFLARE WORKER PARA EVITAR BLOQUEIO DE CORS!
-          const proxyUrl = `https://simpleblock-proxy.adrian-cantero1.workers.dev/proxy/${encodeURIComponent(searchUrl)}`;
           
-          const res = await fetch(proxyUrl, { signal: controller.signal });
+          // Realiza busca direta (sem passar pelo proxy restringido de workers.dev)
+          const res = await fetch(searchUrl, { signal: controller.signal });
           clearTimeout(timeoutId);
           
           if (res.ok) {
             const data = await res.json();
-            if (data && data.length > 0) return { instance, data };
+            if (data && Array.isArray(data) && data.length > 0) {
+              console.log(`Busca bem-sucedida usando a instância: ${instance}`);
+              return { instance, data };
+            }
+          } else {
+            console.warn(`Instância ${instance} retornou erro HTTP: ${res.status}`);
           }
         } catch (e) {
           console.warn(`Instância Invidious falhou (${instance}):`, e);
+          lastError = e;
         }
       }
-      throw new Error('Todas as instâncias de busca falharam. Tente novamente mais tarde.');
+      
+      throw new Error(lastError ? lastError.message : 'Todas as instâncias de busca falharam.');
     }
 
     // Iniciar a busca a partir da página inicial
