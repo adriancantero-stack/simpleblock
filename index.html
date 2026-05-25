@@ -1002,6 +1002,14 @@
     let currentSearchResults = [];
     let currentlyPlayingVideo = null;
 
+    // Áudio silencioso em loop para impedir que o navegador/OS pause a reprodução em segundo plano (tela bloqueada ou app minimizado)
+    const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA');
+    silentAudio.loop = true;
+    
+    // Variáveis globais para monitoramento de progresso e duração (usados no MediaSession e barra de progresso da tela de bloqueio)
+    let playerCurrentTime = 0;
+    let playerDuration = 0;
+
     // Busca os dados e renderiza os cards
     async function searchAndRender(query) {
       document.getElementById('loading').classList.add('active');
@@ -1084,8 +1092,8 @@
       if (!videoItem) {
         videoItem = {
           videoId: videoId,
-          title: title,
-          author: 'Desconhecido',
+          title: title || 'Vídeo LivrePlay',
+          author: 'LivrePlay',
           lengthSeconds: 0,
           viewCountText: ''
         };
@@ -1099,18 +1107,161 @@
       // Atualiza o estado do botão de favoritos
       updateFavoriteButtonState(videoId);
 
-      // O Embed nocookie roda sem anúncios e de forma extremamente veloz e segura
-      const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&fs=1`;
+      // Reseta tempos locais para a MediaSession
+      playerCurrentTime = 0;
+      playerDuration = videoItem.lengthSeconds || 0;
+
+      // Inicia a âncora de áudio silencioso (necessário para impedir a suspensão da aba em segundo plano / tela bloqueada)
+      silentAudio.play().then(() => {
+        console.log('Sessão de áudio em segundo plano ativa');
+      }).catch(err => {
+        console.log('Autoplay silencioso aguardando interação física:', err);
+      });
+
+      // Habilita a API Javascript do YouTube (enablejsapi=1) para permitir controle remoto bidirecional
+      const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&fs=1&enablejsapi=1`;
       
-      document.getElementById('activeUrl').innerText = title;
+      document.getElementById('activeUrl').innerText = videoItem.title;
       
       const iframe = document.getElementById('browserIframe');
       iframe.src = embedUrl;
       
       document.getElementById('browserView').classList.add('active');
       
+      // Registra dados na MediaSession do dispositivo (Controles do Sistema Operacional / Tela de Bloqueio / Fones de Ouvido)
+      if ('mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: videoItem.title || 'Vídeo LivrePlay',
+            artist: videoItem.author !== 'Desconhecido' && videoItem.author !== 'LivrePlay' ? videoItem.author : 'LivrePlay',
+            album: 'LivrePlay',
+            artwork: [
+              { src: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`, sizes: '320x180', type: 'image/jpeg' },
+              { src: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`, sizes: '480x360', type: 'image/jpeg' }
+            ]
+          });
+          
+          // Ações físicas de controle (Reproduzir, Pausar, Retroceder 10s, Avançar 10s e Controle Deslizante de Busca)
+          navigator.mediaSession.setActionHandler('play', () => {
+            sendPlayerCommand('playVideo');
+          });
+          navigator.mediaSession.setActionHandler('pause', () => {
+            sendPlayerCommand('pauseVideo');
+          });
+          navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+            const offset = details.seekOffset || 10;
+            sendPlayerCommand('seekTo', [Math.max(0, playerCurrentTime - offset), true]);
+          });
+          navigator.mediaSession.setActionHandler('seekforward', (details) => {
+            const offset = details.seekOffset || 10;
+            sendPlayerCommand('seekTo', [Math.min(playerDuration || 9999, playerCurrentTime + offset), true]);
+          });
+          
+          if ('setActionHandler' in navigator.mediaSession) {
+            try {
+              navigator.mediaSession.setActionHandler('seekto', (details) => {
+                if (details.seekTime !== undefined) {
+                  sendPlayerCommand('seekTo', [details.seekTime, true]);
+                }
+              });
+            } catch (e) {
+              console.warn('Busca de tempo na tela de bloqueio não suportada por este navegador');
+            }
+          }
+        } catch (sessionErr) {
+          console.warn('Erro ao configurar MediaSession:', sessionErr);
+        }
+      }
+      
       // Renderiza a barra lateral (Feature 2)
       renderSidebar();
+    }
+
+    // Utilitário para enviar comandos remotos para o Iframe do YouTube
+    function sendPlayerCommand(func, args = []) {
+      const iframe = document.getElementById('browserIframe');
+      if (iframe && iframe.contentWindow) {
+        try {
+          iframe.contentWindow.postMessage(JSON.stringify({
+            event: 'command',
+            func: func,
+            args: args
+          }), '*');
+        } catch (e) {
+          console.warn('Falha ao enviar comando de reprodução remota:', e);
+        }
+      }
+    }
+
+    // Escuta e processa o feedback de reprodução do Iframe do YouTube via PostMessage API
+    window.addEventListener('message', (event) => {
+      if (!event.origin.includes('youtube')) return;
+      
+      try {
+        let data = event.data;
+        if (typeof data === 'string') {
+          data = JSON.parse(data);
+        }
+        
+        if (!data) return;
+        
+        // Sincronização do Estado do Player
+        if (data.event === 'onStateChange') {
+          handlePlayerStateChange(data.info);
+        } 
+        // Monitoramento ativo de tempo, buffers e progresso
+        else if (data.event === 'infoDelivery' && data.info) {
+          if (data.info.playerState !== undefined) {
+            handlePlayerStateChange(data.info.playerState);
+          }
+          if (data.info.currentTime !== undefined) {
+            playerCurrentTime = data.info.currentTime;
+            updateMediaSessionPosition();
+          }
+          if (data.info.duration !== undefined) {
+            playerDuration = data.info.duration;
+          }
+        }
+      } catch (err) {
+        // Silencia erros normais de parse causados por outras mensagens
+      }
+    });
+
+    // Controla o ciclo de vida do áudio silencioso e sincroniza com a MediaSession
+    function handlePlayerStateChange(state) {
+      // 1 = Playing (Tocando), 2 = Paused (Pausado), 0 = Ended (Terminado), 3 = Buffering
+      if (state === 1) {
+        // Se o player iniciou, forçamos o áudio silencioso a tocar junto para travar o áudio no SO
+        if (silentAudio.paused) {
+          silentAudio.play().catch(() => {});
+        }
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.playbackState = 'playing';
+        }
+      } else if (state === 2 || state === 0) {
+        // Se pausou ou acabou, pausamos o áudio silencioso para conservar energia do SO
+        silentAudio.pause();
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.playbackState = 'paused';
+        }
+      }
+    }
+
+    // Sincroniza a barra de progresso física/lock screen nativa do sistema em tempo real
+    function updateMediaSessionPosition() {
+      if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+        try {
+          if (playerDuration > 0 && playerCurrentTime >= 0 && playerCurrentTime <= playerDuration) {
+            navigator.mediaSession.setPositionState({
+              duration: playerDuration,
+              playbackRate: 1.0,
+              position: playerCurrentTime
+            });
+          }
+        } catch (e) {
+          console.warn('Erro ao sincronizar barra de progresso nativa:', e);
+        }
+      }
     }
     
     // === LÓGICA DE HISTÓRICO E FAVORITOS ===
@@ -1143,7 +1294,7 @@
     }
 
     function updateFavoriteButtonState(videoId) {
-      const favorites = JSON.parse(localStorage.getItem('simpleblock_favorites') || '[]');
+      const favorites = JSON.parse(localStorage.getItem('livreplay_favorites') || '[]');
       const isFav = favorites.some(v => v.videoId === videoId);
       const btn = document.getElementById('favoriteToggleBtn');
       if (btn) {
