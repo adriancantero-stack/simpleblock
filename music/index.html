@@ -1493,18 +1493,18 @@
     function renderHomeScreen() {
       // === Artistas Brasileiros em Alta (pool de 12, exibe 8 aleatórios) ===
       const allBrazilianArtists = [
-        { name: 'Ana Castela', tag: 'Sertanejo', search: 'Ana Castela', avatar: 'assets/avatars/ana_castela.png' },
-        { name: 'Zé Vaqueiro', tag: 'Forró', search: 'Zé Vaqueiro', avatar: 'assets/avatars/ze_vaqueiro.png' },
-        { name: 'Gusttavo Lima', tag: 'Sertanejo', search: 'Gusttavo Lima', avatar: 'assets/avatars/gusttavo_lima.png' },
-        { name: 'Marília Mendonça', tag: 'Sertanejo', search: 'Marília Mendonça', avatar: 'assets/avatars/marilia_mendonca.png' },
-        { name: 'Wesley Safadão', tag: 'Forró / Axé', search: 'Wesley Safadão', avatar: 'assets/avatars/wesley_safadao.png' },
-        { name: 'Jorge & Mateus', tag: 'Sertanejo', search: 'Jorge e Mateus', avatar: 'assets/avatars/jorge_mateus.png' },
-        { name: 'Anitta', tag: 'Pop / Funk', search: 'Anitta', avatar: 'assets/avatars/anitta.png' },
-        { name: 'Ivete Sangalo', tag: 'Axé / Pop', search: 'Ivete Sangalo', avatar: 'assets/avatars/ivete_sangalo.png' },
-        { name: 'Luan Santana', tag: 'Sertanejo', search: 'Luan Santana', avatar: 'assets/avatars/luan_santana.png' },
-        { name: 'Xand Avião', tag: 'Forró', search: 'Xand Avião', avatar: 'assets/avatars/xand_aviao.png' },
-        { name: 'Pedro Sampaio', tag: 'Funk / Pop', search: 'Pedro Sampaio', avatar: 'assets/avatars/pedro_sampaio.png' },
-        { name: 'Simone Mendes', tag: 'Sertanejo', search: 'Simone Mendes', avatar: 'assets/avatars/simone_mendes.png' },
+        { name: 'Ana Castela', tag: 'Sertanejo', search: 'Ana Castela', avatar: '../assets/avatars/ana_castela.png' },
+        { name: 'Zé Vaqueiro', tag: 'Forró', search: 'Zé Vaqueiro', avatar: '../assets/avatars/ze_vaqueiro.png' },
+        { name: 'Gusttavo Lima', tag: 'Sertanejo', search: 'Gusttavo Lima', avatar: '../assets/avatars/gusttavo_lima.png' },
+        { name: 'Marília Mendonça', tag: 'Sertanejo', search: 'Marília Mendonça', avatar: '../assets/avatars/marilia_mendonca.png' },
+        { name: 'Wesley Safadão', tag: 'Forró / Axé', search: 'Wesley Safadão', avatar: '../assets/avatars/wesley_safadao.png' },
+        { name: 'Jorge & Mateus', tag: 'Sertanejo', search: 'Jorge e Mateus', avatar: '../assets/avatars/jorge_mateus.png' },
+        { name: 'Anitta', tag: 'Pop / Funk', search: 'Anitta', avatar: '../assets/avatars/anitta.png' },
+        { name: 'Ivete Sangalo', tag: 'Axé / Pop', search: 'Ivete Sangalo', avatar: '../assets/avatars/ivete_sangalo.png' },
+        { name: 'Luan Santana', tag: 'Sertanejo', search: 'Luan Santana', avatar: '../assets/avatars/luan_santana.png' },
+        { name: 'Xand Avião', tag: 'Forró', search: 'Xand Avião', avatar: '../assets/avatars/xand_aviao.png' },
+        { name: 'Pedro Sampaio', tag: 'Funk / Pop', search: 'Pedro Sampaio', avatar: '../assets/avatars/pedro_sampaio.png' },
+        { name: 'Simone Mendes', tag: 'Sertanejo', search: 'Simone Mendes', avatar: '../assets/avatars/simone_mendes.png' },
       ];
 
       const rowBR = document.getElementById('trendingArtistsRow');
@@ -1554,15 +1554,15 @@
 
       // === Artistas Internacionais (pool de 10, exibe 7 aleatórios) ===
       const allIntlArtists = [
-        { name: 'Bad Bunny', tag: 'Reggaeton', search: 'Bad Bunny', avatar: 'assets/avatars/bad_bunny.png' },
-        { name: 'Taylor Swift', tag: 'Pop', search: 'Taylor Swift', avatar: 'assets/avatars/taylor_swift.png' },
-        { name: 'The Weeknd', tag: 'R&B / Pop', search: 'The Weeknd', avatar: 'assets/avatars/the_weeknd.png' },
+        { name: 'Bad Bunny', tag: 'Reggaeton', search: 'Bad Bunny', avatar: '../assets/avatars/bad_bunny.png' },
+        { name: 'Taylor Swift', tag: 'Pop', search: 'Taylor Swift', avatar: '../assets/avatars/taylor_swift.png' },
+        { name: 'The Weeknd', tag: 'R&B / Pop', search: 'The Weeknd', avatar: '../assets/avatars/the_weeknd.png' },
         { name: 'Drake', tag: 'Hip-Hop', search: 'Drake', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Drake' },
         { name: 'Dua Lipa', tag: 'Pop / Dance', search: 'Dua Lipa', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=DuaLipa' },
         { name: 'Billie Eilish', tag: 'Alternative', search: 'Billie Eilish', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=BillieEilish' },
         { name: 'Post Malone', tag: 'Hip-Hop / Pop', search: 'Post Malone', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=PostMalone' },
-        { name: 'Karol G', tag: 'Reggaeton', search: 'Karol G', avatar: 'assets/avatars/karol_g.png' },
-        { name: 'Ed Sheeran', tag: 'Pop', search: 'Ed Sheeran', avatar: 'assets/avatars/ed_sheeran.png' },
+        { name: 'Karol G', tag: 'Reggaeton', search: 'Karol G', avatar: '../assets/avatars/karol_g.png' },
+        { name: 'Ed Sheeran', tag: 'Pop', search: 'Ed Sheeran', avatar: '../assets/avatars/ed_sheeran.png' },
         { name: 'Olivia Rodrigo', tag: 'Pop / Alt', search: 'Olivia Rodrigo', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=OliviaRodrigo' },
       ];
 

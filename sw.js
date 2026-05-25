@@ -1,4 +1,4 @@
-const CACHE_NAME = 'livreplay-v12';
+const CACHE_NAME = 'livreplay-v13';
 const FILTERS_URL = 'filters.json';
 let blockedPatterns = [];
 
