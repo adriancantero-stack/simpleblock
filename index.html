@@ -146,7 +146,7 @@
     }
 
     /* Busca estilo Spotlight */
-    .search-container { position: relative; margin-bottom: 20px; width: 100%; }
+    .search-container { position: relative; margin-bottom: 36px; width: 100%; }
     .search-box {
       width: 100%; padding: 16px 52px 16px 48px;
       background: var(--surface); border: 1px solid rgba(255,255,255,0.1);
@@ -167,17 +167,7 @@
     .go-btn:active { transform:translateY(-50%) scale(0.94); }
     .go-btn svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2.5; }
 
-    /* Botões de ação */
-    .actions { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px; }
-    .action-btn {
-      padding:14px 16px; background:var(--surface); border:1px solid rgba(255,255,255,0.08);
-      border-radius:var(--radius); color:var(--text-primary); font-size:15px; font-weight:500;
-      font-family:inherit; cursor:pointer; transition:var(--transition);
-      display:flex; align-items:center; justify-content:center; gap:8px;
-      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); min-height:48px;
-    }
-    .action-btn:hover, .action-btn:focus { background:var(--surface-hover); transform:translateY(-2px); box-shadow:var(--focus-ring); }
-    .action-btn:active { transform:translateY(0) scale(0.98); }
+
     .action-btn svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; }
 
     /* Removed old features and tv notice styles to keep it ultra-minimalist and elegant */
@@ -722,7 +712,7 @@
     /* ================= RESPONSIVIDADE ================= */
     /* Mobile (< 768px) */
     @media (max-width: 767px) {
-      .actions { grid-template-columns: 1fr; }
+
       .features { grid-template-columns: 1fr; }
       .feature { flex-direction: row; gap: 12px; text-align: left; padding: 14px; }
       .feature-icon { margin-bottom: 0; }
@@ -772,8 +762,7 @@
     .tv-mode .search-box { padding: 20px 56px 20px 52px; font-size: 20px; min-height: 64px; border-radius: 24px; }
     .tv-mode .go-btn { width: 48px; height: 48px; border-radius: 16px; }
     .tv-mode .go-btn svg { width: 22px; height: 22px; }
-    .tv-mode .actions { gap: 16px; margin-bottom: 36px; }
-    .tv-mode .action-btn { padding: 18px 20px; font-size: 18px; min-height: 60px; border-radius: 16px; }
+
     /* Removed old features and tv notice tv-mode styles to keep it ultra-minimalist */
 
     /* Foco explícito para TV/Teclado */
@@ -819,16 +808,7 @@
       </button>
     </div>
 
-    <div class="actions">
-      <button class="action-btn focusable" onclick="installPWA()">
-        <svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20"/></svg>
-        Instalar App
-      </button>
-      <button class="action-btn focusable" onclick="castToTV()">
-        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m8 21 4-4 4 4"/></svg>
-        Transmitir TV
-      </button>
-    </div>
+
 
     <!-- SEÇÃO DE HISTÓRICO E FAVORITOS -->
     <div class="user-sections" id="userSections" style="display: none;">
