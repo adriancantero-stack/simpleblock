@@ -4,17 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0f0f0f">
-  <title>SimpleBlock</title>
+  <title>SimpleBlock - YouTube sem anúncios</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
     :root {
-      --bg: #f5f5f7;
-      --card: rgba(255, 255, 255, 0.85);
-      --text: #1a1a1a;
-      --text-secondary: #71717a;
+      --bg: #0f0f0f;
+      --card: rgba(255, 255, 255, 0.05);
+      --text: #ffffff;
+      --text-secondary: #a1a1aa;
       --accent: #10b981;
-      --border: rgba(255, 255, 255, 0.5);
+      --focus: #3b82f6;
     }
     
     body {
@@ -23,408 +23,358 @@
       color: var(--text);
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 20px;
-      position: relative;
-      overflow-x: hidden;
-    }
-    
-    /* Background blur effect - CSS puro */
-    body::before {
-      content: '';
-      position: absolute;
-      top: -160px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 780px;
-      height: 780px;
-      background: white;
-      border-radius: 50%;
-      filter: blur(96px);
-      opacity: 0.8;
-      pointer-events: none;
-      z-index: 0;
     }
     
     .container {
-      position: relative;
-      z-index: 1;
       width: 100%;
-      max-width: 520px;
-      animation: fadeInUp 0.5s ease-out;
+      max-width: 600px;
+      animation: fadeIn 0.5s ease-out;
     }
     
-    @keyframes fadeInUp {
+    @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
     
-    .card {
-      background: var(--card);
-      backdrop-filter: blur(24px);
-      border: 1px solid var(--border);
-      border-radius: 38px;
-      padding: 32px;
-      text-align: center;
-      box-shadow: 0 35px 90px rgba(0,0,0,0.1);
-    }
-    
     .logo {
-      width: 64px;
-      height: 64px;
-      background: #1a1a1a;
-      border-radius: 22px;
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 20px;
       display: grid;
       place-items: center;
       margin: 0 auto 24px;
-      color: white;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
     }
     
     .badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: #ecfdf5;
-      border: 1px solid #d1fae5;
-      color: #059669;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid var(--accent);
+      color: var(--accent);
       padding: 8px 16px;
       border-radius: 9999px;
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
       margin-bottom: 24px;
     }
     
-    .badge-dot {
-      width: 10px;
-      height: 10px;
-      background: var(--accent);
-      border-radius: 50%;
-      position: relative;
-    }
-    
-    .badge-dot::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      background: var(--accent);
-      animation: ping 1.5s infinite;
-    }
-    
-    @keyframes ping {
-      75%, 100% { transform: scale(2); opacity: 0; }
-    }
-    
     h1 {
-      font-size: clamp(40px, 10vw, 56px);
-      font-weight: 600;
-      letter-spacing: -0.06em;
-      line-height: 0.92;
-      margin-bottom: 20px;
-    }
-    
-    h2 {
-      font-size: clamp(22px, 5vw, 28px);
-      font-weight: 600;
-      letter-spacing: -0.04em;
-      margin-bottom: 16px;
-      line-height: 1.2;
+      font-size: clamp(32px, 8vw, 48px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+      text-align: center;
     }
     
     .subtitle {
       color: var(--text-secondary);
-      font-size: 16px;
-      line-height: 1.6;
-      max-width: 448px;
-      margin: 0 auto 32px;
+      font-size: clamp(16px, 3vw, 18px);
+      text-align: center;
+      margin-bottom: 32px;
+      line-height: 1.5;
     }
     
-    .buttons {
-      display: grid;
-      grid-template-columns: 1fr;
+    .search-box {
+      display: flex;
       gap: 12px;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
     }
     
-    @media (min-width: 640px) {
-      .buttons { grid-template-columns: 1fr 1fr; }
+    input {
+      flex: 1;
+      padding: 16px 20px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      color: white;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    
+    input:focus {
+      border-color: var(--focus);
     }
     
     .btn {
+      padding: 16px 28px;
       border: none;
-      padding: 16px 24px;
-      border-radius: 9999px;
+      border-radius: 12px;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      transition: transform 0.15s, background 0.2s;
+      transition: transform 0.15s, opacity 0.2s;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
     }
     
-    .btn-primary {
-      background: #1a1a1a;
-      color: white;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    .btn:focus {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
     }
     
-    .btn-primary:hover { transform: scale(1.02); }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-primary:hover, .btn-primary:focus {
+      transform: scale(1.02);
+      opacity: 0.95;
+    }
     
     .btn-secondary {
-      background: white;
-      color: var(--text);
-      border: 1px solid #e4e4e7;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.2);
     }
     
-    .btn-secondary:hover { background: #fafafa; }
+    .btn-secondary:hover, .btn-secondary:focus {
+      background: rgba(255,255,255,0.15);
+    }
     
     .features {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 12px;
-      margin-bottom: 28px;
-      text-align: left;
+      margin-bottom: 24px;
     }
     
     .feature {
-      background: #fafafa;
-      border: 1px solid #f4f4f5;
-      border-radius: 22px;
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
       padding: 16px;
+      text-align: center;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    
+    .feature:focus {
+      border-color: var(--focus);
+      transform: scale(1.02);
     }
     
     .feature-icon {
-      width: 19px;
-      height: 19px;
-      color: #3f3f46;
-      margin-bottom: 12px;
+      font-size: 28px;
+      margin-bottom: 8px;
     }
     
     .feature-title {
       font-size: 14px;
       font-weight: 600;
-      letter-spacing: -0.02em;
       margin-bottom: 4px;
     }
     
-    .feature-subtitle {
+    .feature-desc {
       font-size: 12px;
       color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      gap: 4px;
     }
     
-    .install-box {
-      background: var(--bg);
-      border: 1px solid #f4f4f5;
-      border-radius: 27px;
-      padding: 20px;
-      text-align: left;
-    }
-    
-    .install-title {
-      font-weight: 600;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 15px;
-    }
-    
-    .install-step {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    
-    .install-step:last-child { margin-bottom: 0; }
-    
-    .step-icon {
-      width: 36px;
-      height: 36px;
-      background: white;
-      border: 1px solid #f4f4f5;
-      border-radius: 14px;
-      display: grid;
-      place-items: center;
-      flex-shrink: 0;
-    }
-    
-    .step-content { flex: 1; }
-    
-    .step-title {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 2px;
-    }
-    
-    .step-text {
-      font-size: 14px;
-      color: var(--text-secondary);
-      line-height: 1.4;
-    }
-    
-    .footer {
+    .tv-notice {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 24px;
       text-align: center;
-      margin-top: 20px;
-      font-size: 12px;
-      color: #a1a1aa;
     }
     
-    /* Ícones SVG inline - zero dependências */
-    .icon { width: 1em; height: 1em; }
+    .tv-notice h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: #60a5fa;
+    }
+    
+    .tv-notice p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    
+    .platforms {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .platform-tag {
+      background: rgba(255,255,255,0.1);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    /* Modo TV - Detectado automaticamente */
+    .tv-mode .container {
+      max-width: 900px;
+    }
+    
+    .tv-mode .btn {
+      padding: 24px 40px;
+      font-size: 20px;
+    }
+    
+    .tv-mode input {
+      padding: 20px 24px;
+      font-size: 20px;
+    }
+    
+    .tv-mode .feature {
+      padding: 24px;
+    }
+    
+    .tv-mode .feature-icon {
+      font-size: 40px;
+    }
+    
+    /* Foco visível para controle remoto */
+    .focusable:focus {
+      outline: 4px solid var(--focus);
+      outline-offset: 4px;
+      background: rgba(59, 130, 246, 0.2);
+    }
+    
+    @media (max-width: 640px) {
+      .search-box {
+        flex-direction: column;
+      }
+      .features {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <!-- Logo -->
-      <div class="logo">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          <path d="m9 12 2 2 4-4"/>
+  <div class="container" id="mainContainer">
+    <!-- Logo -->
+    <div class="logo">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        <path d="m9 12 2 2 4-4"/>
+      </svg>
+    </div>
+    
+    <!-- Badge -->
+    <div class="badge">
+      <span>✓</span>
+      <span id="statusText">Bloqueio ativo</span>
+    </div>
+    
+    <!-- Título -->
+    <h1>SimpleBlock</h1>
+    <p class="subtitle">YouTube sem anúncios em qualquer dispositivo<br>Android • iOS • Smart TV</p>
+    
+    <!-- Busca -->
+    <div class="search-box">
+      <input 
+        type="text" 
+        id="urlInput" 
+        placeholder="youtube.com ou pesquise..." 
+        class="focusable"
+        onkeypress="handleKeyPress(event)"
+        autofocus
+      >
+      <button class="btn btn-primary focusable" onclick="navigate()">
+        <span>Abrir</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
         </svg>
+      </button>
+    </div>
+    
+    <!-- Botões de ação -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+      <button class="btn btn-secondary focusable" onclick="installPWA()">
+        📲 Instalar App
+      </button>
+      <button class="btn btn-secondary focusable" onclick="castToTV()">
+        📺 Transmitir TV
+      </button>
+    </div>
+    
+    <!-- Features -->
+    <div class="features">
+      <div class="feature focusable" tabindex="0">
+        <div class="feature-icon">🛡️</div>
+        <div class="feature-title">Sem Anúncios</div>
+        <div class="feature-desc">Bloqueio total</div>
       </div>
-      
-      <!-- Badge -->
-      <div class="badge">
-        <span class="badge-dot"></span>
-        Modo limpo ativado
+      <div class="feature focusable" tabindex="0">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-title">Rápido</div>
+        <div class="feature-desc">Cache inteligente</div>
       </div>
-      
-      <!-- Título -->
-      <h1>SimpleBlock</h1>
-      <h2>Uma experiência mais limpa para assistir vídeos.</h2>
-      <p class="subtitle">
-        Acesse seus conteúdos favoritos com uma interface leve, rápida e minimalista. Instale na tela inicial e use como um app.
-      </p>
-      
-      <!-- Botões -->
-      <div class="buttons">
-        <button class="btn btn-primary" onclick="navigate()">
-          Abrir SimpleBlock
-          <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
-        </button>
-        <button class="btn btn-secondary" onclick="installPWA()">
-          Instalar como app
-        </button>
+      <div class="feature focusable" tabindex="0">
+        <div class="feature-icon">📱</div>
+        <div class="feature-title">Multi-plataforma</div>
+        <div class="feature-desc">Android/iOS/TV</div>
       </div>
-      
-      <!-- Features -->
-      <div class="features">
-        <div class="feature">
-          <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            <path d="m9 12 2 2 4-4"/>
-          </svg>
-          <div class="feature-title">Modo limpo</div>
-          <div class="feature-subtitle">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-              <path d="M20 6 9 17l-5-5"/>
-            </svg>
-            Ativo
-          </div>
-        </div>
-        <div class="feature">
-          <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>
-          </svg>
-          <div class="feature-title">Experiência</div>
-          <div class="feature-subtitle">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-              <path d="M20 6 9 17l-5-5"/>
-            </svg>
-            Otimizada
-          </div>
-        </div>
-        <div class="feature">
-          <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
-            <path d="M12 18h.01"/>
-          </svg>
-          <div class="feature-title">PWA</div>
-          <div class="feature-subtitle">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-              <path d="M20 6 9 17l-5-5"/>
-            </svg>
-            Instalável
-          </div>
-        </div>
-        <div class="feature">
-          <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17.5 19c0-1.7-1.3-3-3-3h-11c-1.7 0-3 1.3-3 3"/>
-            <path d="M6.5 22c0-1.7-1.3-3-3-3"/>
-            <path d="M15 16c-1.7 0-3-1.3-3-3V5a3 3 0 0 1 6 0v8c0 1.7-1.3 3-3 3Z"/>
-            <path d="M19 16c-1.7 0-3-1.3-3-3"/>
-          </svg>
-          <div class="feature-title">Cloudflare</div>
-          <div class="feature-subtitle">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-              <path d="M20 6 9 17l-5-5"/>
-            </svg>
-            Conectado
-          </div>
-        </div>
-      </div>
-      
-      <!-- Install Guide -->
-      <div class="install-box">
-        <div class="install-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
-            <path d="M12 18h.01"/>
-          </svg>
-          Como instalar na tela inicial
-        </div>
-        <div class="install-step">
-          <div class="step-icon">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-              <polyline points="16 6 12 2 8 6"/>
-              <line x1="12" x2="12" y1="2" y2="15"/>
-            </svg>
-          </div>
-          <div class="step-content">
-            <div class="step-title">iPhone</div>
-            <div class="step-text">Toque em Compartilhar e depois em Adicionar à Tela de Início.</div>
-          </div>
-        </div>
-        <div class="install-step">
-          <div class="step-icon">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect width="18" height="18" x="3" y="3" rx="2"/>
-              <path d="M9 3v18"/>
-              <path d="M3 9h18"/>
-            </svg>
-          </div>
-          <div class="step-content">
-            <div class="step-title">Android</div>
-            <div class="step-text">Toque no menu do navegador e depois em Instalar app.</div>
-          </div>
-        </div>
+      <div class="feature focusable" tabindex="0">
+        <div class="feature-icon">🎮</div>
+        <div class="feature-title">Controle Remoto</div>
+        <div class="feature-desc">Navegação TV</div>
       </div>
     </div>
     
-    <p class="footer">Minimal. Fast. Clean.</p>
+    <!-- Aviso TV -->
+    <div class="tv-notice" id="tvNotice">
+      <h3>🎯 Funciona na Smart TV!</h3>
+      <p>
+        <strong>Android TV/Fire Stick:</strong> Instale o app APK<br>
+        <strong>Samsung/LG:</strong> Use o navegador da TV ou espelhe do celular<br>
+        <strong>Qualquer TV:</strong> Use Chromecast/AirPlay
+      </p>
+      <div class="platforms">
+        <span class="platform-tag">Android</span>
+        <span class="platform-tag">iOS</span>
+        <span class="platform-tag">Android TV</span>
+        <span class="platform-tag">Tizen</span>
+        <span class="platform-tag">webOS</span>
+      </div>
+    </div>
   </div>
   
   <script>
-    // Função de navegação (integra com seu proxy)
-    function navigate() {
-  // Força a versão mobile (mais leve e compatível com proxy)
-  const target = 'https://m.youtube.com';
-  const proxyUrl = `https://simpleblock-proxy.adrian-cantero1.workers.dev/proxy/${encodeURIComponent(target)}`;
-  window.location.href = proxyUrl;
-}
+    // Detecta se é TV
+    const isTV = /smart-tv|smarttv|googletv|hdmi|netcast|appletv|web0s|webos|netcast/i.test(navigator.userAgent) || 
+                 window.innerWidth > 1200;
     
-    // Função de instalação PWA
+    if (isTV) {
+      document.body.classList.add('tv-mode');
+      document.getElementById('statusText').textContent = 'Modo TV ativado';
+    }
+    
+    // Navegação
+    function navigate() {
+      const input = document.getElementById('urlInput');
+      const val = input.value.trim() || 'youtube.com';
+      
+      const isUrl = val.includes('.') && !val.includes(' ');
+      const target = isUrl ? (val.startsWith('http') ? val : `https://${val}`) 
+                           : `https://www.youtube.com/results?search_query=${encodeURIComponent(val)}`;
+      
+      const proxyUrl = `https://simpleblock-proxy.adrian-cantero1.workers.dev/proxy/${encodeURIComponent(target)}`;
+      window.location.href = proxyUrl;
+    }
+    
+    function handleKeyPress(event) {
+      if (event.key === 'Enter') navigate();
+    }
+    
+    // Instalação PWA
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
@@ -434,26 +384,51 @@
     function installPWA() {
       if (deferredPrompt) {
         deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(() => {
-          deferredPrompt = null;
-        });
+        deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
       } else {
-        alert('Use o menu do navegador para instalar o app');
+        alert('Use o menu do navegador para instalar');
       }
     }
     
-    // Animação suave no scroll
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.feature, .install-step').forEach((el, i) => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(10px)';
-        setTimeout(() => {
-          el.style.transition = 'opacity 0.4s, transform 0.4s';
-          el.style.opacity = '1';
-          el.style.transform = 'translateY(0)';
-        }, i * 100);
-      });
+    // Chromecast/AirPlay
+    function castToTV() {
+      if (navigator.presentation && navigator.presentation.defaultRequest) {
+        navigator.presentation.defaultRequest.start()
+          .then(conn => {
+            alert('Conectado à TV!');
+          })
+          .catch(() => {
+            alert('Nenhuma TV encontrada. Verifique se está na mesma rede.');
+          });
+      } else {
+        alert('Use a função "Transmitir" do seu dispositivo');
+      }
+    }
+    
+    // Navegação por teclado/controle remoto
+    document.addEventListener('keydown', (e) => {
+      const focusables = document.querySelectorAll('.focusable');
+      const current = document.activeElement;
+      let index = Array.from(focusables).indexOf(current);
+      
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        index = (index + 1) % focusables.length;
+        focusables[index].focus();
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        index = (index - 1 + focusables.length) % focusables.length;
+        focusables[index].focus();
+      } else if (e.key === 'Enter' && current.classList.contains('feature')) {
+        e.preventDefault();
+        navigate();
+      }
     });
+    
+    // Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(console.error);
+    }
   </script>
 </body>
 </html>
