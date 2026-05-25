@@ -61,8 +61,8 @@
   </script>
 
   <link rel="manifest" href="../manifest.json">
-  <link rel="icon" type="image/png" href="../logo.png">
-  <link rel="apple-touch-icon" href="../logo.png">
+  <link rel="icon" type="image/png" href="../logo-video.png">
+  <link rel="apple-touch-icon" href="../logo-video.png">
   <style>
     :root {
       --bg: #000000;
@@ -70,13 +70,13 @@
       --surface-hover: rgba(255, 255, 255, 0.14);
       --text-primary: #ffffff;
       --text-secondary: rgba(255, 255, 255, 0.6);
-      --accent: #0a84ff;
-      --accent-hover: #0071e3;
+      --accent: #ff3b30;
+      --accent-hover: #e02d24;
       --radius: 16px;
       --radius-lg: 20px;
       --radius-xl: 28px;
       --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      --focus-ring: 0 0 0 3px rgba(10, 132, 255, 0.5);
+      --focus-ring: 0 0 0 3px rgba(255, 59, 48, 0.5);
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
@@ -104,7 +104,7 @@
       content: '';
       position: absolute;
       top: -30%; left: -30%; width: 160%; height: 160%;
-      background: radial-gradient(ellipse at 20% 30%, rgba(10, 132, 255, 0.12) 0%, transparent 55%),
+      background: radial-gradient(ellipse at 20% 30%, rgba(255, 59, 48, 0.12) 0%, transparent 55%),
                   radial-gradient(ellipse at 80% 70%, rgba(168, 85, 247, 0.08) 0%, transparent 55%);
       z-index: 0;
       animation: breathe 18s ease-in-out infinite;
@@ -125,13 +125,13 @@
       width: 64px; height: 64px;
       display: grid; place-items: center;
       position: relative;
-      filter: drop-shadow(0 8px 24px rgba(10, 132, 255, 0.45));
+      filter: drop-shadow(0 8px 24px rgba(255, 59, 48, 0.45));
       transition: var(--transition);
       cursor: pointer;
     }
     .logo:hover {
       transform: scale(1.05);
-      filter: drop-shadow(0 12px 32px rgba(10, 132, 255, 0.65));
+      filter: drop-shadow(0 12px 32px rgba(255, 59, 48, 0.65));
     }
 
     /* Tipografia */
@@ -885,7 +885,7 @@
   <div class="container" id="homeView">
     <div class="logo-wrapper">
       <div class="logo">
-        <img src="../logo.png" alt="LivrePlay Logo" style="width: 100%; height: 100%; object-fit: contain;">
+        <img src="../logo-video.png" alt="LivrePlay Logo" style="width: 100%; height: 100%; object-fit: contain;">
       </div>
     </div>
 
