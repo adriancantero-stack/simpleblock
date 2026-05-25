@@ -990,6 +990,110 @@
     let playerCurrentTime = 0;
     let playerDuration = 0;
 
+    let activeInvidiousInstance = null;
+    let currentAudioStreamUrl = null;
+    let isBackgroundMode = false;
+
+    async function getActiveInstance() {
+      if (activeInvidiousInstance) return activeInvidiousInstance;
+      return FALLBACK_INSTANCES[0];
+    }
+
+    // Pré-carrega a stream de áudio direta da instância Invidious em segundo plano
+    async function prefetchAudioStream(videoId) {
+      currentAudioStreamUrl = null;
+      try {
+        const instance = await getActiveInstance();
+        const res = await fetch(`${instance}/api/v1/videos/${videoId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const audioStreams = data.audioStreams || [];
+          // iOS exige container M4A para reprodução nativa otimizada, Android suporta WebM/Opus. M4A roda perfeito em ambos.
+          const bestStream = audioStreams.find(s => s.container === 'm4a') || audioStreams[0];
+          if (bestStream) {
+            let streamUrl = bestStream.url;
+            if (streamUrl.startsWith('/')) {
+              streamUrl = instance + streamUrl;
+            }
+            currentAudioStreamUrl = streamUrl;
+            console.log('Stream de áudio de background pré-carregada:', currentAudioStreamUrl);
+          }
+        }
+      } catch (e) {
+        console.warn('Erro ao pré-carregar áudio de background:', e);
+      }
+    }
+
+    // Transição Híbrida de Background (Vídeo em Primeiro Plano -> Áudio Nativo em Segundo Plano)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        // Bloqueou ou minimizou: muda para o player de áudio nativo se houver stream pré-carregada
+        if (currentlyPlayingVideo && !isBackgroundMode && currentAudioStreamUrl) {
+          isBackgroundMode = true;
+          const currentTime = playerCurrentTime;
+          
+          // 1. Pausa o player do YouTube no iframe
+          sendPlayerCommand('pauseVideo');
+          
+          // 2. Aponta o áudio local para a stream real do vídeo
+          silentAudio.src = currentAudioStreamUrl;
+          silentAudio.currentTime = currentTime;
+          silentAudio.loop = false; // Áudio real, não precisa mais do loop de silêncio
+          
+          // 3. Toca o áudio real de background
+          silentAudio.play().then(() => {
+            console.log('Áudio de background iniciado nativamente a partir de:', currentTime);
+            if ('mediaSession' in navigator) {
+              navigator.mediaSession.playbackState = 'playing';
+            }
+          }).catch(err => {
+            console.warn('Falha ao iniciar reprodução nativa em background:', err);
+            isBackgroundMode = false;
+          });
+        }
+      } else {
+        // Voltou para o app: restaura o vídeo em primeiro plano
+        if (isBackgroundMode) {
+          isBackgroundMode = false;
+          const currentTime = silentAudio.currentTime;
+          
+          // 1. Pausa o áudio de background
+          silentAudio.pause();
+          
+          // 2. Restaura o arquivo de silêncio na âncora
+          silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA';
+          silentAudio.loop = true;
+          
+          // 3. Sincroniza e inicia o player do YouTube no iframe
+          sendPlayerCommand('seekTo', [currentTime, true]);
+          sendPlayerCommand('playVideo');
+          console.log('Retornou do background. Sincronizado vídeo em:', currentTime);
+        }
+      }
+    });
+
+    // Escuta eventos de fim do áudio nativo em background
+    silentAudio.addEventListener('ended', () => {
+      if (isBackgroundMode) {
+        isBackgroundMode = false;
+        silentAudio.pause();
+        silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA';
+        silentAudio.loop = true;
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.playbackState = 'none';
+        }
+        console.log('Áudio de background finalizado.');
+      }
+    });
+
+    // Sincroniza posição de reprodução do áudio ativo em background com a MediaSession
+    silentAudio.addEventListener('timeupdate', () => {
+      if (isBackgroundMode) {
+        playerCurrentTime = silentAudio.currentTime;
+        updateMediaSessionPosition();
+      }
+    });
+
     // Busca os dados e renderiza os cards
     async function searchAndRender(query) {
       document.getElementById('loading').classList.add('active');
@@ -998,6 +1102,7 @@
       
       try {
         const { instance, data } = await fetchSearch(query);
+        activeInvidiousInstance = instance;
         const grid = document.getElementById('resultsGrid');
         grid.innerHTML = '';
         
@@ -1090,6 +1195,9 @@
       // Reseta tempos locais para a MediaSession
       playerCurrentTime = 0;
       playerDuration = videoItem.lengthSeconds || 0;
+
+      // Dispara a busca em background da stream de áudio real para caso o usuário bloqueie a tela
+      prefetchAudioStream(videoId);
 
       // Inicia a âncora de áudio silencioso (necessário para impedir a suspensão da aba em segundo plano / tela bloqueada)
       silentAudio.play().then(() => {
@@ -1420,6 +1528,20 @@
     function handleResultsKeyPress(e) { if (e.key === 'Enter') navigateFromResults(); }
 
     function exitBrowser() {
+      // Para e reseta a âncora de áudio silenciosa / real de background
+      silentAudio.pause();
+      silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA';
+      silentAudio.loop = true;
+      isBackgroundMode = false;
+      currentAudioStreamUrl = null;
+      currentlyPlayingVideo = null;
+      
+      // Limpa os dados do controle de mídia do sistema
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = null;
+        navigator.mediaSession.playbackState = 'none';
+      }
+
       document.getElementById('browserView').classList.remove('active');
       document.getElementById('browserIframe').src = 'about:blank';
     }
