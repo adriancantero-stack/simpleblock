@@ -123,28 +123,7 @@
     .action-btn:active { transform:translateY(0) scale(0.98); }
     .action-btn svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; }
 
-    /* Features */
-    .features { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:24px; }
-    .feature {
-      background:var(--surface); border:1px solid rgba(255,255,255,0.06); border-radius:var(--radius);
-      padding:18px 12px; text-align:center; transition:var(--transition);
-      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); min-height:80px;
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-    }
-    .feature:hover, .feature:focus { background:var(--surface-hover); transform:translateY(-3px); box-shadow:var(--focus-ring); }
-    .feature-icon { font-size:22px; margin-bottom:6px; }
-    .feature-title { font-size:13px; font-weight:600; margin-bottom:2px; }
-    .feature-desc { font-size:11px; color:var(--text-secondary); }
-
-    /* TV Notice */
-    .tv-notice {
-      background:var(--surface); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius);
-      padding:18px; text-align:center; backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-    }
-    .tv-notice h3 { font-size:14px; font-weight:600; margin-bottom:6px; color:var(--accent); }
-    .tv-notice p { font-size:12px; color:var(--text-secondary); line-height:1.4; margin-bottom:10px; }
-    .platforms { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
-    .platform-tag { background:rgba(255,255,255,0.08); padding:4px 8px; border-radius:6px; font-size:10px; font-weight:500; color:var(--text-secondary); }
+    /* Removed old features and tv notice styles to keep it ultra-minimalist and elegant */
 
     /* Loading */
     .loading { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:100; place-items:center; }
@@ -738,15 +717,7 @@
     .tv-mode .go-btn svg { width: 22px; height: 22px; }
     .tv-mode .actions { gap: 16px; margin-bottom: 36px; }
     .tv-mode .action-btn { padding: 18px 20px; font-size: 18px; min-height: 60px; border-radius: 16px; }
-    .tv-mode .features { gap: 16px; }
-    .tv-mode .feature { padding: 24px 16px; min-height: 100px; border-radius: 16px; }
-    .tv-mode .feature-icon { font-size: 28px; }
-    .tv-mode .feature-title { font-size: 15px; }
-    .tv-mode .feature-desc { font-size: 13px; }
-    .tv-mode .tv-notice { padding: 24px; border-radius: 16px; }
-    .tv-mode .tv-notice h3 { font-size: 18px; }
-    .tv-mode .tv-notice p { font-size: 15px; }
-    .tv-mode .platform-tag { font-size: 12px; padding: 6px 10px; }
+    /* Removed old features and tv notice tv-mode styles to keep it ultra-minimalist */
 
     /* Foco explícito para TV/Teclado */
     .focusable:focus-visible { outline: none; box-shadow: var(--focus-ring); transform: scale(1.02); }
@@ -764,7 +735,7 @@
     </div>
 
     <h1>SimpleBlock</h1>
-    <p class="subtitle">YouTube sem anúncios.<br>Simples, rápido e elegante.</p>
+    <p class="subtitle">Simples. Rápido. Sem anúncios.</p>
 
     <div class="search-container">
       <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -785,18 +756,6 @@
       </button>
     </div>
 
-    <div class="features">
-      <div class="feature focusable" tabindex="0">
-        <div class="feature-icon">🛡️</div><div class="feature-title">Sem Anúncios</div><div class="feature-desc">Bloqueio total</div>
-      </div>
-      <div class="feature focusable" tabindex="0">
-        <div class="feature-icon">⚡</div><div class="feature-title">Rápido</div><div class="feature-desc">Cache inteligente</div>
-      </div>
-      <div class="feature focusable" tabindex="0">
-        <div class="feature-icon">📱</div><div class="feature-title">Multi-plataforma</div><div class="feature-desc">Android/iOS/TV</div>
-      </div>
-    </div>
-
     <!-- SEÇÃO DE HISTÓRICO E FAVORITOS -->
     <div class="user-sections" id="userSections" style="display: none;">
       <div class="tabs-header">
@@ -812,14 +771,6 @@
       <div class="tab-content" id="tabFavoritos">
         <div class="horizontal-scroll" id="favoritosScroll"></div>
         <p class="empty-text" id="favoritosEmpty">Nenhum vídeo favoritado ainda</p>
-      </div>
-    </div>
-
-    <div class="tv-notice">
-      <h3>Funciona na Smart TV</h3>
-      <p><strong>Android TV/Fire Stick:</strong> Instale o app APK<br><strong>Samsung/LG:</strong> Use o navegador ou espelhe<br><strong>Qualquer TV:</strong> Chromecast/AirPlay</p>
-      <div class="platforms">
-        <span class="platform-tag">Android</span><span class="platform-tag">iOS</span><span class="platform-tag">Android TV</span><span class="platform-tag">Tizen</span><span class="platform-tag">webOS</span>
       </div>
     </div>
   </div>
