@@ -1,2 +1,2 @@
-# simpleblock-pwa
+# SimpleBlock
 Bloqueador de ADS para Youtube
