@@ -1,4 +1,4 @@
-const CACHE_NAME = 'simpleblock-v3';
+const CACHE_NAME = 'simpleblock-v4';
 const FILTERS_URL = 'filters.json';
 let blockedPatterns = [];
 
@@ -39,6 +39,11 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Ignora e não intercepta requisições ao YouTube Embed para preservar o cabeçalho Referer nativo e evitar o Erro 153
+  if (e.request.url.includes('youtube.com/embed') || e.request.url.includes('youtube-nocookie.com/embed')) {
+    return;
+  }
+
   if (isBlocked(e.request.url)) { e.respondWith(new Response('', { status: 204 })); return; }
   if (e.request.destination === 'document' || e.request.destination === 'image') {
     e.respondWith(fetch(e.request).then(res => {
