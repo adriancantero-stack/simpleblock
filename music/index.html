@@ -619,7 +619,12 @@
       </nav>
 
       <div class="library-section">
-        <span class="library-header">Minha Biblioteca</span>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-right: 8px; margin-bottom: 8px;">
+          <span class="library-header" style="margin-bottom: 0;">Minha Biblioteca</span>
+          <button onclick="createNewPlaylistPrompt()" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; transition: var(--transition); display: flex; align-items: center;" title="Criar Playlist" aria-label="Criar Playlist">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
         <div class="library-list" id="libraryList">
           <!-- Populado dinamicamente via JS -->
         </div>
@@ -663,6 +668,27 @@
         <div class="music-grid" id="recentesGrid"></div>
         <p class="empty-text" id="recentesEmpty" style="color: var(--text-muted); display: none;">Nenhuma música ouvida recentemente.</p>
       </div>
+
+      <!-- View: Playlist Customizada -->
+      <div class="view-container" id="viewPlaylist" style="display: none;">
+        <div style="display: flex; align-items: flex-end; gap: 24px; margin-bottom: 12px; flex-wrap: wrap;">
+          <div id="playlistViewCover" style="width: 140px; height: 140px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(135deg, #1db954, #191414); box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">PLAYLIST</span>
+            <h2 class="view-title" id="playlistViewTitle" style="font-size: 36px; margin: 0; line-height: 1.1;">Nome da Playlist</h2>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; flex-wrap: wrap;">
+              <span style="font-weight: 600; color: #fff;">Sua Biblioteca</span>
+              <span style="color: var(--text-muted);">•</span>
+              <span id="playlistViewTrackCount" style="color: var(--text-muted);">0 músicas</span>
+              <button onclick="deleteCurrentPlaylist()" style="background: transparent; border: none; color: #ff3b30; cursor: pointer; font-size: 13px; font-weight: 600; margin-left: 16px; padding: 4px 8px; border-radius: 4px; transition: var(--transition);">Excluir Playlist</button>
+            </div>
+          </div>
+        </div>
+        <div class="music-grid" id="playlistGrid"></div>
+        <p class="empty-text" id="playlistEmpty" style="color: var(--text-muted); display: none;">Nenhuma música nesta playlist. Comece a ouvir e clique no botão "+" no player para adicionar!</p>
+      </div>
     </main>
   </div>
 
@@ -677,6 +703,9 @@
       </div>
       <button class="heart-toggle-btn" id="favPlayToggleBtn" onclick="toggleFavoriteCurrent()" style="margin-left: 12px; display: none;">
         <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      </button>
+      <button class="heart-toggle-btn" id="addToPlaylistBtn" onclick="addCurrentToPlaylistPrompt()" style="margin-left: 8px; display: none;" title="Adicionar à Playlist">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
       </button>
     </div>
 
@@ -714,6 +743,11 @@
     </div>
   </footer>
 
+  <!-- Player Iframe Oculto de Fallback de Altíssima Resiliência -->
+  <div style="position: absolute; width: 1px; height: 1px; left: -9999px; top: -9999px; overflow: hidden; pointer-events: none;">
+    <iframe id="youtubeIframe" name="youtubeIframe" src="about:blank" allow="autoplay; encrypted-media"></iframe>
+  </div>
+
   <script>
     // Lista de instâncias saudáveis de busca
     const FALLBACK_INSTANCES = [
@@ -725,10 +759,14 @@
     ];
 
     const PIPED_API_INSTANCES = [
+      'https://pipedapi.lunar.icu',
+      'https://pipedapi.adminforge.de',
+      'https://pipedapi.astxt.xyz',
+      'https://pipedapi.ox2.fr',
+      'https://pipedapi.synxt.ru',
+      'https://api.piped.privacydev.net',
       'https://api.piped.yt',
-      'https://pipedapi.kavin.rocks',
-      'https://piped-api.lunar.icu',
-      'https://pipedapi.tokhmi.xyz'
+      'https://pipedapi.kavin.rocks'
     ];
 
     let currentSearchResults = [];
@@ -737,11 +775,103 @@
     let currentAudioStreamUrl = null;
     let isBackgroundMode = false;
 
+    let activeEngine = 'audio'; // 'audio' ou 'iframe'
+    let playStateIsPlaying = false;
+    let activePlaylistId = null;
+
     // Elemento de áudio nativo de background pré-aquecido
     const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA');
     silentAudio.loop = true;
 
-    let playerCurrentTime = 0;    // Buscar e carregar a stream de áudio direta via Invidious latest_version M4A (itag 140)
+    // === CONTROLES DO PLAYER IFRAME HÍBRIDO HIDE/FALLBACK ===
+    function playIframeFallback(videoId) {
+      activeEngine = 'iframe';
+      silentAudio.pause();
+      
+      // Reseta a tag de áudio para evitar ruídos de buffer de Invidious travados
+      silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA';
+      silentAudio.loop = true;
+      silentAudio.play().catch(() => {});
+      
+      // Habilita API de áudio e autoplay e oculta a reprodução visual
+      const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&enablejsapi=1&mute=0&rel=0&modestbranding=1`;
+      document.getElementById('youtubeIframe').src = embedUrl;
+      console.log('Iniciada reprodução de resiliência total via Iframe oculto:', videoId);
+      setPlayState(true);
+    }
+
+    function sendIframeCommand(func, args = []) {
+      const iframe = document.getElementById('youtubeIframe');
+      if (iframe && iframe.contentWindow) {
+        try {
+          iframe.contentWindow.postMessage(JSON.stringify({
+            event: 'command',
+            func: func,
+            args: args
+          }), '*');
+        } catch (e) {
+          console.warn('Falha ao enviar comando para o iframe híbrido:', e);
+        }
+      }
+    }
+
+    // Ouvinte PostMessage para receber atualizações do YouTube Iframe oculto
+    window.addEventListener('message', (event) => {
+      if (!event.origin.includes('youtube') || activeEngine !== 'iframe') return;
+      
+      try {
+        let data = event.data;
+        if (typeof data === 'string') {
+          data = JSON.parse(data);
+        }
+        if (!data) return;
+        
+        if (data.event === 'onStateChange') {
+          // 1 = Playing, 2 = Paused, 0 = Ended
+          if (data.info === 1) {
+            setPlayState(true);
+          } else if (data.info === 2) {
+            setPlayState(false);
+          } else if (data.info === 0) {
+            setPlayState(false);
+            playNextRecommended();
+          }
+        } else if (data.event === 'infoDelivery' && data.info) {
+          if (data.info.playerState !== undefined) {
+            setPlayState(data.info.playerState === 1);
+          }
+          if (data.info.currentTime !== undefined) {
+            playerCurrentTime = data.info.currentTime;
+            document.getElementById('currentTimeLabel').innerText = formatTime(playerCurrentTime);
+            
+            if (playerDuration > 0) {
+              const pct = (playerCurrentTime / playerDuration) * 100;
+              document.getElementById('progressFill').style.width = `${pct}%`;
+            }
+            
+            // Sincroniza MediaSession do SO
+            if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+              try {
+                if (playerDuration > 0 && playerCurrentTime <= playerDuration) {
+                  navigator.mediaSession.setPositionState({
+                    duration: playerDuration,
+                    playbackRate: 1.0,
+                    position: playerCurrentTime
+                  });
+                }
+              } catch (e) {}
+            }
+          }
+          if (data.info.duration !== undefined && data.info.duration > 0) {
+            playerDuration = data.info.duration;
+            document.getElementById('durationLabel').innerText = formatTime(playerDuration);
+          }
+        }
+      } catch (err) {}
+    });
+
+    let playerCurrentTime = 0;
+    let playerDuration = 0;    // Buscar e carregar a stream de áudio direta via Invidious latest_version M4A (itag 140)
     async function prefetchAudioStream(videoId) {
       currentAudioStreamUrl = null;
       let lastError = null;
@@ -922,7 +1052,8 @@
         }
       }
 
-      alert('Não foi possível carregar a música. Por favor, tente outra faixa ou recarregue a página.');
+      console.warn('Todas as instâncias de áudio nativo falharam. Ativando fallback de reprodução por Iframe.');
+      playIframeFallback(videoId);
       document.getElementById('spinner').style.display = 'none';
     }
 
@@ -1057,6 +1188,11 @@
       saveToHistory(trackItem);
       updateFavoriteButtonState(videoId);
 
+      // Reseta o player híbrido para áudio nativo padrão
+      activeEngine = 'audio';
+      document.getElementById('youtubeIframe').src = 'about:blank';
+      document.getElementById('addToPlaylistBtn').style.display = 'block';
+
       // Pre-aquecimento nativo
       silentAudio.play().catch(() => {});
 
@@ -1140,17 +1276,28 @@
     function togglePlayback() {
       if (!currentlyPlayingVideo) return;
       
-      if (silentAudio.paused) {
-        silentAudio.play().then(() => {
-          setPlayState(true);
-        });
+      if (activeEngine === 'audio') {
+        if (silentAudio.paused) {
+          silentAudio.play().then(() => {
+            setPlayState(true);
+          });
+        } else {
+          silentAudio.pause();
+          setPlayState(false);
+        }
       } else {
-        silentAudio.pause();
-        setPlayState(false);
+        if (playStateIsPlaying) {
+          sendIframeCommand('pauseVideo');
+          setPlayState(false);
+        } else {
+          sendIframeCommand('playVideo');
+          setPlayState(true);
+        }
       }
     }
 
     function setPlayState(isPlaying) {
+      playStateIsPlaying = isPlaying;
       const playIcon = document.getElementById('playIcon');
       if (isPlaying) {
         playIcon.innerHTML = `<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`;
@@ -1164,8 +1311,13 @@
     // Seek Avançar e Voltar
     function seekOffset(offset) {
       if (!currentlyPlayingVideo) return;
-      const target = Math.max(0, Math.min(playerDuration, silentAudio.currentTime + offset));
-      silentAudio.currentTime = target;
+      const current = activeEngine === 'audio' ? silentAudio.currentTime : playerCurrentTime;
+      const target = Math.max(0, Math.min(playerDuration, current + offset));
+      if (activeEngine === 'audio') {
+        silentAudio.currentTime = target;
+      } else {
+        sendIframeCommand('seekTo', [target, true]);
+      }
     }
 
     // Clicar na barra para avançar a música
@@ -1177,7 +1329,12 @@
       const width = rect.width;
       const pct = clickX / width;
       
-      silentAudio.currentTime = pct * playerDuration;
+      const target = pct * playerDuration;
+      if (activeEngine === 'audio') {
+        silentAudio.currentTime = target;
+      } else {
+        sendIframeCommand('seekTo', [target, true]);
+      }
     }
 
     // Formatar segundos em tempo 0:00
@@ -1242,36 +1399,175 @@
 
     // Renderizar itens rápidos no menu lateral
     function renderLibrary() {
-      const favorites = JSON.parse(localStorage.getItem('livreplay_music_favorites') || '[]');
       const list = document.getElementById('libraryList');
       list.innerHTML = '';
       
-      if (favorites.length === 0) {
+      const favorites = JSON.parse(localStorage.getItem('livreplay_music_favorites') || '[]');
+      const playlists = JSON.parse(localStorage.getItem('livreplay_playlists') || '[]');
+      
+      if (favorites.length === 0 && playlists.length === 0) {
         list.innerHTML = '<span style="font-size:12px; color:var(--text-muted); padding-left:12px;">Sua biblioteca está vazia.</span>';
         return;
       }
 
-      favorites.slice(0, 10).forEach(item => {
-        const thumb = item.videoThumbnails && item.videoThumbnails.find(t => t.quality === 'medium' || t.quality === 'default')?.url 
-          || `https://i.ytimg.com/vi/${item.videoId}/mqdefault.jpg`;
-          
-        const div = document.createElement('div');
-        div.className = 'library-item';
-        div.onclick = () => playMusic(item);
-        
-        div.innerHTML = `
-          <img class="lib-thumb" src="${thumb}" alt="${item.title}" loading="lazy">
+      // 1. Mostrar Músicas Curtidas
+      if (favorites.length > 0) {
+        const favDiv = document.createElement('div');
+        favDiv.className = 'library-item';
+        favDiv.onclick = () => switchView('favoritos');
+        favDiv.innerHTML = `
+          <div class="lib-thumb" style="background: linear-gradient(135deg, #450af5, #c41a88); display: grid; place-items: center; border-radius: 6px;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          </div>
           <div class="lib-info">
-            <h4 class="lib-title">${item.title}</h4>
-            <p class="lib-author">${item.author}</p>
+            <h4 class="lib-title">Músicas Curtidas</h4>
+            <p class="lib-author">${favorites.length} música${favorites.length !== 1 ? 's' : ''}</p>
           </div>
         `;
-        list.appendChild(div);
+        list.appendChild(favDiv);
+      }
+
+      // 2. Mostrar as Playlists Customizadas
+      playlists.forEach(pl => {
+        const plDiv = document.createElement('div');
+        plDiv.className = 'library-item';
+        plDiv.onclick = () => showPlaylistView(pl.id);
+        
+        const hasTracks = pl.tracks.length > 0;
+        const thumbHtml = hasTracks 
+          ? `<img class="lib-thumb" src="${pl.tracks[0].videoThumbnails && pl.tracks[0].videoThumbnails.find(t => t.quality === 'medium' || t.quality === 'default')?.url || `https://i.ytimg.com/vi/${pl.tracks[0].videoId}/mqdefault.jpg`}" loading="lazy">`
+          : `<div class="lib-thumb" style="background: #282828; display: grid; place-items: center; border-radius: 6px;">
+               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+             </div>`;
+             
+        plDiv.innerHTML = `
+          ${thumbHtml}
+          <div class="lib-info">
+            <h4 class="lib-title">${pl.name}</h4>
+            <p class="lib-author">Playlist • ${pl.tracks.length} música${pl.tracks.length !== 1 ? 's' : ''}</p>
+          </div>
+        `;
+        list.appendChild(plDiv);
       });
+    }
+
+    // Gerenciador de Playlists Customizadas
+    function createNewPlaylistPrompt() {
+      const name = prompt("Digite o nome da sua nova playlist:");
+      if (!name || !name.trim()) return;
+      
+      let playlists = JSON.parse(localStorage.getItem('livreplay_playlists') || '[]');
+      if (playlists.some(p => p.name.toLowerCase() === name.trim().toLowerCase())) {
+        alert("Já existe uma playlist com este nome!");
+        return;
+      }
+      
+      playlists.push({
+        id: 'pl_' + Date.now(),
+        name: name.trim(),
+        tracks: []
+      });
+      
+      localStorage.setItem('livreplay_playlists', JSON.stringify(playlists));
+      renderLibrary();
+    }
+
+    function addCurrentToPlaylistPrompt() {
+      if (!currentlyPlayingVideo) return;
+      const playlists = JSON.parse(localStorage.getItem('livreplay_playlists') || '[]');
+      if (playlists.length === 0) {
+        const create = confirm("Você não tem nenhuma playlist criada ainda. Deseja criar uma agora?");
+        if (create) createNewPlaylistPrompt();
+        return;
+      }
+      
+      const track = currentlyPlayingVideo;
+      
+      let optionsStr = "Escolha o número da playlist para adicionar a música:\n\n";
+      playlists.forEach((pl, idx) => {
+        optionsStr += `${idx + 1}. ${pl.name} (${pl.tracks.length} músicas)\n`;
+      });
+      
+      const choice = prompt(optionsStr);
+      if (!choice) return;
+      
+      const choiceIdx = parseInt(choice.trim()) - 1;
+      if (isNaN(choiceIdx) || choiceIdx < 0 || choiceIdx >= playlists.length) {
+        alert("Opção inválida!");
+        return;
+      }
+      
+      const targetPl = playlists[choiceIdx];
+      if (targetPl.tracks.some(v => v.videoId === track.videoId)) {
+        alert(`Esta música já existe na playlist "${targetPl.name}"!`);
+        return;
+      }
+      
+      targetPl.tracks.push(track);
+      localStorage.setItem('livreplay_playlists', JSON.stringify(playlists));
+      alert(`Música adicionada com sucesso à playlist "${targetPl.name}"!`);
+      renderLibrary();
+      
+      if (activePlaylistId === targetPl.id) {
+        showPlaylistView(targetPl.id);
+      }
+    }
+
+    function showPlaylistView(playlistId) {
+      activePlaylistId = playlistId;
+      document.querySelectorAll('.view-container').forEach(c => c.style.display = 'none');
+      document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+      
+      const playlists = JSON.parse(localStorage.getItem('livreplay_playlists') || '[]');
+      const pl = playlists.find(p => p.id === playlistId);
+      if (!pl) return;
+      
+      document.getElementById('playlistViewTitle').innerText = pl.name;
+      document.getElementById('playlistViewTrackCount').innerText = `${pl.tracks.length} música${pl.tracks.length !== 1 ? 's' : ''}`;
+      
+      const cover = document.getElementById('playlistViewCover');
+      const hasTracks = pl.tracks.length > 0;
+      if (hasTracks) {
+        const thumbUrl = pl.tracks[0].videoThumbnails && pl.tracks[0].videoThumbnails.find(t => t.quality === 'medium' || t.quality === 'default')?.url 
+          || `https://i.ytimg.com/vi/${pl.tracks[0].videoId}/mqdefault.jpg`;
+        cover.innerHTML = `<img src="${thumbUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;" loading="lazy">`;
+      } else {
+        cover.innerHTML = `<svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
+      }
+      
+      const grid = document.getElementById('playlistGrid');
+      const empty = document.getElementById('playlistEmpty');
+      
+      if (pl.tracks.length === 0) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+      } else {
+        empty.style.display = 'none';
+        renderGrid(pl.tracks, grid);
+      }
+      
+      document.getElementById('viewPlaylist').style.display = 'flex';
+    }
+
+    function deleteCurrentPlaylist() {
+      if (!activePlaylistId) return;
+      const playlists = JSON.parse(localStorage.getItem('livreplay_playlists') || '[]');
+      const pl = playlists.find(p => p.id === activePlaylistId);
+      if (!pl) return;
+      
+      const confirmDelete = confirm(`Tem certeza que deseja excluir a playlist "${pl.name}"?`);
+      if (!confirmDelete) return;
+      
+      const updated = playlists.filter(p => p.id !== activePlaylistId);
+      localStorage.setItem('livreplay_playlists', JSON.stringify(updated));
+      activePlaylistId = null;
+      renderLibrary();
+      switchView('busca');
     }
 
     // Alternador de Abas de Visibilidade (Busca, Favoritos, Recentes)
     function switchView(viewName) {
+      activePlaylistId = null;
       document.querySelectorAll('.view-container').forEach(c => c.style.display = 'none');
       document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
       
