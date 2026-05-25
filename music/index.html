@@ -1166,6 +1166,9 @@
             playNextRecommended();
           }
         } else if (data.event === 'infoDelivery' && data.info) {
+          if (data.info.muted) {
+            sendIframeCommand('unMute');
+          }
           if (data.info.playerState !== undefined) {
             setPlayState(data.info.playerState === 1);
           }
@@ -1383,8 +1386,8 @@
         }
       }
 
-      // 3. Backup final no Piped (apenas as 2 instâncias mais rápidas)
-      const pipedInstances = [...PIPED_API_INSTANCES].slice(0, 2);
+      // 3. Backup final no Piped (tenta múltiplas instâncias para evitar falhas silenciosas)
+      const pipedInstances = shufflePick(PIPED_API_INSTANCES, 5);
       for (const instance of pipedInstances) {
         if (activeTrackId !== videoId) return; // Guard!
         
@@ -1677,7 +1680,8 @@
       updateFavoriteButtonState(videoId);
       document.getElementById('addToPlaylistBtn').style.display = 'block';
 
-      // Reclamar o gesto do usuário imediatamente (essencial para iOS Safari permitir autoplay)
+      // Reclamar o gesto do usuário imediatamente e silenciar a faixa anterior
+      silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA';
       silentAudio.play().catch(() => {});
 
       // Reseta o player híbrido para áudio nativo padrão (iOS agora também roda nativo perfeitamente sem o método load())
@@ -1806,6 +1810,7 @@
           sendIframeCommand('pauseVideo');
           setPlayState(false);
         } else {
+          sendIframeCommand('unMute'); // Garante que tira do mudo ao forçar o play
           sendIframeCommand('playVideo');
           setPlayState(true);
         }
@@ -2395,8 +2400,24 @@
       // Carrega instâncias dinâmicas do Invidious em segundo plano imediatamente
       loadDynamicInstances();
       
-      // Renderiza a tela Home de descoberta (artistas e gêneros)
-      renderHomeScreen();
+      // Suporte a links de compartilhamento (?v=VIDEO_ID)
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const videoId = params.get('v') || params.get('video');
+        if (videoId) {
+          const dummyTrack = {
+            videoId: videoId,
+            title: 'Música Compartilhada',
+            author: 'LivrePlay Music',
+            videoThumbnails: [{ url: `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg` }]
+          };
+          playMusic(dummyTrack, null, [dummyTrack]);
+        } else {
+          renderHomeScreen();
+        }
+      } catch (err) {
+        renderHomeScreen();
+      }
     });
 
     // ================= APOIO =================
@@ -2448,8 +2469,8 @@
       const title = currentlyPlayingVideo.title || 'Música';
       const artist = currentlyPlayingVideo.author || '';
       const videoId = currentlyPlayingVideo.videoId;
-      const url = `https://www.youtube.com/watch?v=${videoId}`;
-      const text = `🎵 ${title}${artist ? ' — ' + artist : ''}`;
+      const url = `https://livreplay.com/music/?v=${videoId}`;
+      const text = `🎵 ${title}${artist ? ' — ' + artist : ''}\nOuça sem anúncios no LivrePlay Music!`;
 
       if (navigator.share) {
         try {

@@ -1726,7 +1726,7 @@
       if (!currentlyPlayingVideo) return;
       const title = currentlyPlayingVideo.title;
       const author = currentlyPlayingVideo.author || 'LivrePlay';
-      const url = `https://www.youtube.com/watch?v=${currentlyPlayingVideo.videoId}`;
+      const url = `https://livreplay.com/?v=${currentlyPlayingVideo.videoId}`;
       const text = `🎥 ${title} — ${author}\nAssista sem anúncios no LivrePlay Video!`;
 
       if (navigator.share) {
