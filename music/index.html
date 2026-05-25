@@ -878,16 +878,6 @@
           <p style="color: var(--text-muted); font-size: 14px; margin-top: 6px;">Descubra músicas, artistas e muito mais</p>
         </div>
 
-        <!-- Suas Playlists (Mobile/Desktop) -->
-        <div id="homePlaylistsSection" style="display: none;">
-          <h2 class="home-section-title" style="margin-top: 16px;">🎧 Suas Playlists</h2>
-          <div class="artists-scroll-wrapper">
-            <div class="artists-scroll-row" id="homePlaylistsRow" style="align-items: flex-start;">
-              <!-- Populado dinamicamente -->
-            </div>
-          </div>
-        </div>
-
         <!-- Artistas em Alta -->
         <div>
           <h2 class="home-section-title">🔥 Artistas em Alta</h2>
@@ -924,6 +914,13 @@
         <div class="music-grid" id="searchGrid">
           <!-- Populado dinamicamente -->
         </div>
+      </div>
+
+      <!-- View: Biblioteca (Playlists no Mobile) -->
+      <div class="view-container" id="viewBiblioteca" style="display: none;">
+        <h2 class="view-title">Sua Biblioteca</h2>
+        <div class="music-grid" id="bibliotecaGrid"></div>
+        <p class="empty-text" id="bibliotecaEmpty" style="color: var(--text-muted); display: none;">Sua biblioteca está vazia.</p>
       </div>
 
       <!-- View: Favoritos -->
@@ -1033,6 +1030,10 @@
     <button class="mobile-nav-item" onclick="switchView('busca')" id="mobileMenuBusca">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <span>Busca</span>
+    </button>
+    <button class="mobile-nav-item" onclick="switchView('biblioteca')" id="mobileMenuBiblioteca">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+      <span>Biblioteca</span>
     </button>
     <button class="mobile-nav-item" onclick="switchView('favoritos')" id="mobileMenuFavoritos">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
@@ -1974,40 +1975,6 @@
         `;
         list.appendChild(plDiv);
       });
-      
-      // 3. Renderizar Playlists na Home (Visível no Mobile)
-      const homeRow = document.getElementById('homePlaylistsRow');
-      const homeSec = document.getElementById('homePlaylistsSection');
-      if (homeRow && homeSec) {
-        homeRow.innerHTML = '';
-        if (playlists.length > 0) {
-          homeSec.style.display = 'block';
-          playlists.forEach(pl => {
-            const el = document.createElement('div');
-            el.className = 'artist-card';
-            el.title = pl.name;
-            el.onclick = () => showPlaylistView(pl.id);
-            
-            let thumbUrl = '';
-            if (pl.thumbnail) {
-              thumbUrl = pl.thumbnail;
-            } else if (pl.tracks.length > 0) {
-              thumbUrl = pl.tracks[0].videoThumbnails && pl.tracks[0].videoThumbnails.find(t => t.quality === 'medium' || t.quality === 'default')?.url || `https://i.ytimg.com/vi/${pl.tracks[0].videoId}/mqdefault.jpg`;
-            } else {
-              thumbUrl = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="120" height="120" fill="%23282828"/><path d="M45 75v-30l30-5v30" fill="none" stroke="white" stroke-width="5"/><circle cx="38" cy="75" r="7" fill="white"/><circle cx="68" cy="70" r="7" fill="white"/></svg>';
-            }
-            
-            el.innerHTML = `
-              <img class="artist-avatar" style="border-radius: 8px; width: 120px; height: 120px; min-width: 120px; object-fit: cover;" src="${thumbUrl}" alt="${pl.name}" loading="lazy">
-              <span class="artist-name" style="max-width: 120px; text-align: center;">${pl.name}</span>
-              <span class="artist-tag" style="max-width: 120px; font-size: 10px; text-align: center;">${pl.tracks.length} músicas</span>
-            `;
-            homeRow.appendChild(el);
-          });
-        } else {
-          homeSec.style.display = 'none';
-        }
-      }
     }
 
     // Gerenciador de Playlists Customizadas
@@ -2142,6 +2109,11 @@
         document.getElementById('menuBusca').classList.add('active');
         const mobileBusca = document.getElementById('mobileMenuBusca');
         if (mobileBusca) mobileBusca.classList.add('active');
+      } else if (viewName === 'biblioteca') {
+        document.getElementById('viewBiblioteca').style.display = 'flex';
+        const mobileBib = document.getElementById('mobileMenuBiblioteca');
+        if (mobileBib) mobileBib.classList.add('active');
+        renderBibliotecaView();
       } else if (viewName === 'favoritos') {
         document.getElementById('viewFavoritos').style.display = 'flex';
         document.getElementById('menuFavoritos').classList.add('active');
@@ -2166,6 +2138,50 @@
       } else {
         empty.style.display = 'none';
         renderGrid(favorites, grid);
+      }
+    }
+
+    function renderBibliotecaView() {
+      const playlists = JSON.parse(localStorage.getItem('livreplay_playlists') || '[]');
+      const grid = document.getElementById('bibliotecaGrid');
+      const empty = document.getElementById('bibliotecaEmpty');
+      
+      grid.innerHTML = '';
+      if (playlists.length === 0) {
+        empty.style.display = 'block';
+        grid.style.display = 'none';
+      } else {
+        empty.style.display = 'none';
+        grid.style.display = 'flex';
+        grid.style.flexWrap = 'wrap';
+        grid.style.gap = '16px';
+        grid.style.justifyContent = 'center';
+        
+        playlists.forEach(pl => {
+          const el = document.createElement('div');
+          el.className = 'artist-card';
+          el.title = pl.name;
+          el.onclick = () => {
+            document.getElementById('viewBiblioteca').style.display = 'none';
+            showPlaylistView(pl.id);
+          };
+          
+          let thumbUrl = '';
+          if (pl.thumbnail) {
+            thumbUrl = pl.thumbnail;
+          } else if (pl.tracks.length > 0) {
+            thumbUrl = pl.tracks[0].videoThumbnails && pl.tracks[0].videoThumbnails.find(t => t.quality === 'medium' || t.quality === 'default')?.url || `https://i.ytimg.com/vi/${pl.tracks[0].videoId}/mqdefault.jpg`;
+          } else {
+            thumbUrl = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="120" height="120" fill="%23282828"/><path d="M45 75v-30l30-5v30" fill="none" stroke="white" stroke-width="5"/><circle cx="38" cy="75" r="7" fill="white"/><circle cx="68" cy="70" r="7" fill="white"/></svg>';
+          }
+          
+          el.innerHTML = `
+            <img class="artist-avatar" style="border-radius: 8px; width: 120px; height: 120px; min-width: 120px; object-fit: cover;" src="${thumbUrl}" alt="${pl.name}" loading="lazy">
+            <span class="artist-name" style="max-width: 120px; text-align: center;">${pl.name}</span>
+            <span class="artist-tag" style="max-width: 120px; font-size: 10px; text-align: center;">${pl.tracks.length} músicas</span>
+          `;
+          grid.appendChild(el);
+        });
       }
     }
 
