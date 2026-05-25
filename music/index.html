@@ -614,6 +614,15 @@
       color: #000;
       transform: scale(1.06);
     }
+    .ctrl-btn-play.playing {
+      background: var(--bg-dark);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .ctrl-btn-play.playing:hover {
+      background: #111;
+      color: #fff;
+    }
     .ctrl-btn-play svg {
       width: 18px;
       height: 18px;
@@ -723,7 +732,7 @@
         bottom: 0;
         left: 0;
         right: 0;
-        height: 60px;
+        height: calc(60px + env(safe-area-inset-bottom));
         background: var(--bg-dark);
         border-top: none;
         z-index: 1000;
@@ -1558,13 +1567,13 @@
         { name: 'Bad Bunny', tag: 'Reggaeton', search: 'Bad Bunny', avatar: '../assets/avatars/bad_bunny.png' },
         { name: 'Taylor Swift', tag: 'Pop', search: 'Taylor Swift', avatar: '../assets/avatars/taylor_swift.png' },
         { name: 'The Weeknd', tag: 'R&B / Pop', search: 'The Weeknd', avatar: '../assets/avatars/the_weeknd.png' },
-        { name: 'Drake', tag: 'Hip-Hop', search: 'Drake', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Drake' },
-        { name: 'Dua Lipa', tag: 'Pop / Dance', search: 'Dua Lipa', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=DuaLipa' },
-        { name: 'Billie Eilish', tag: 'Alternative', search: 'Billie Eilish', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=BillieEilish' },
-        { name: 'Post Malone', tag: 'Hip-Hop / Pop', search: 'Post Malone', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=PostMalone' },
+        { name: 'Drake', tag: 'Hip-Hop', search: 'Drake', avatar: '../assets/avatars/drake.png' },
+        { name: 'Dua Lipa', tag: 'Pop / Dance', search: 'Dua Lipa', avatar: '../assets/avatars/dua_lipa.png' },
+        { name: 'Billie Eilish', tag: 'Alternative', search: 'Billie Eilish', avatar: '../assets/avatars/billie_eilish.png' },
+        { name: 'Post Malone', tag: 'Hip-Hop / Pop', search: 'Post Malone', avatar: '../assets/avatars/post_malone.png' },
         { name: 'Karol G', tag: 'Reggaeton', search: 'Karol G', avatar: '../assets/avatars/karol_g.png' },
         { name: 'Ed Sheeran', tag: 'Pop', search: 'Ed Sheeran', avatar: '../assets/avatars/ed_sheeran.png' },
-        { name: 'Olivia Rodrigo', tag: 'Pop / Alt', search: 'Olivia Rodrigo', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=OliviaRodrigo' },
+        { name: 'Olivia Rodrigo', tag: 'Pop / Alt', search: 'Olivia Rodrigo', avatar: '../assets/avatars/olivia_rodrigo.png' },
       ];
 
       const rowIntl = document.getElementById('internationalArtistsRow');
@@ -1791,14 +1800,17 @@
       playStateIsPlaying = isPlaying;
       const playIcon = document.getElementById('playIcon');
       const pauseIcon = document.getElementById('pauseIcon');
+      const playBtn = document.getElementById('playBtn');
       if (playIcon && pauseIcon) {
         if (isPlaying) {
           playIcon.style.display = 'none';
           pauseIcon.style.display = 'block';
+          if (playBtn) playBtn.classList.add('playing');
           if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
         } else {
           playIcon.style.display = 'block';
           pauseIcon.style.display = 'none';
+          if (playBtn) playBtn.classList.remove('playing');
           if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
         }
       }
@@ -2145,14 +2157,14 @@
 
     // Carregamento Inicial do App
     window.addEventListener('DOMContentLoaded', async () => {
-      // Inicializar playlists padrão se for o primeiro acesso
-      if (!localStorage.getItem('livreplay_playlists_initialized')) {
+      // Inicializar playlists padrão se for o primeiro acesso ou atualizar as capas antigas
+      if (!localStorage.getItem('livreplay_playlists_initialized_v2')) {
         const defaultPlaylists = [
           {
             "id": "pl_sertanejo24",
             "name": "Top Sertanejo",
             "description": "As mais tocadas do sertanejo e sofrência.",
-            "thumbnail": "https://i.ytimg.com/vi/3Yf5VvPvHjQ/mqdefault.jpg",
+            "thumbnail": "../assets/playlists/pl_sertanejo.png",
             "tracks": [
               {"videoId": "3Yf5VvPvHjQ", "title": "Ana Castela - Nosso Quadro", "uploader": "AgroPlay", "durationText": "2:54", "thumbnail": "https://i.ytimg.com/vi/3Yf5VvPvHjQ/mqdefault.jpg"},
               {"videoId": "OgE00Qz9T0s", "title": "Gusttavo Lima - Termina Comigo Antes", "uploader": "Gusttavo Lima", "durationText": "3:10", "thumbnail": "https://i.ytimg.com/vi/OgE00Qz9T0s/mqdefault.jpg"},
@@ -2164,7 +2176,7 @@
             "id": "pl_funk24",
             "name": "Funk Hits",
             "description": "Os maiores hits do funk brasileiro.",
-            "thumbnail": "https://i.ytimg.com/vi/dDuAQT4mLW8/mqdefault.jpg",
+            "thumbnail": "../assets/playlists/pl_funk.png",
             "tracks": [
               {"videoId": "dDuAQT4mLW8", "title": "Pedro Sampaio - DANÇARINA", "uploader": "Pedro Sampaio", "durationText": "1:50", "thumbnail": "https://i.ytimg.com/vi/dDuAQT4mLW8/mqdefault.jpg"},
               {"videoId": "S0LjqRGFiVo", "title": "Anitta - Envolver", "uploader": "Anitta", "durationText": "3:13", "thumbnail": "https://i.ytimg.com/vi/S0LjqRGFiVo/mqdefault.jpg"},
@@ -2176,7 +2188,7 @@
             "id": "pl_forro24",
             "name": "Paredão Forró",
             "description": "Só as melhores do forró e piseiro.",
-            "thumbnail": "https://i.ytimg.com/vi/V4e5-qXCxYg/mqdefault.jpg",
+            "thumbnail": "../assets/playlists/pl_forro.png",
             "tracks": [
               {"videoId": "V4e5-qXCxYg", "title": "Zé Vaqueiro - Letícia", "uploader": "Zé Vaqueiro", "durationText": "3:02", "thumbnail": "https://i.ytimg.com/vi/V4e5-qXCxYg/mqdefault.jpg"},
               {"videoId": "GNxaH_ioRj8", "title": "Wesley Safadão - Tu Tava na Revoada", "uploader": "Wesley Safadão", "durationText": "2:49", "thumbnail": "https://i.ytimg.com/vi/GNxaH_ioRj8/mqdefault.jpg"},
@@ -2188,7 +2200,7 @@
             "id": "pl_pop24",
             "name": "Pop Internacional",
             "description": "Hits do pop mundial.",
-            "thumbnail": "https://i.ytimg.com/vi/q3zqJs7JUCQ/mqdefault.jpg",
+            "thumbnail": "../assets/playlists/pl_pop.png",
             "tracks": [
               {"videoId": "q3zqJs7JUCQ", "title": "Taylor Swift - Anti-Hero", "uploader": "Taylor Swift", "durationText": "5:09", "thumbnail": "https://i.ytimg.com/vi/q3zqJs7JUCQ/mqdefault.jpg"},
               {"videoId": "XXYlFuWiqLg", "title": "The Weeknd - Save Your Tears", "uploader": "The Weeknd", "durationText": "4:08", "thumbnail": "https://i.ytimg.com/vi/XXYlFuWiqLg/mqdefault.jpg"},
@@ -2200,7 +2212,7 @@
             "id": "pl_lofi24",
             "name": "Lo-Fi Chill",
             "description": "Para relaxar e focar.",
-            "thumbnail": "https://i.ytimg.com/vi/jfKfPfyJRdk/mqdefault.jpg",
+            "thumbnail": "../assets/playlists/pl_lofi.png",
             "tracks": [
               {"videoId": "jfKfPfyJRdk", "title": "lofi hip hop radio - beats to relax/study to", "uploader": "Lofi Girl", "durationText": "LIVE", "thumbnail": "https://i.ytimg.com/vi/jfKfPfyJRdk/mqdefault.jpg"},
               {"videoId": "5qap5aO4i9A", "title": "lofi hip hop radio - beats to sleep/chill to", "uploader": "Lofi Girl", "durationText": "LIVE", "thumbnail": "https://i.ytimg.com/vi/5qap5aO4i9A/mqdefault.jpg"},
@@ -2211,7 +2223,7 @@
             "id": "pl_reggaeton24",
             "name": "Reggaeton Caliente",
             "description": "As melhores do reggaeton.",
-            "thumbnail": "https://i.ytimg.com/vi/kTlv5_Bs8aw/mqdefault.jpg",
+            "thumbnail": "../assets/playlists/pl_reggaeton.png",
             "tracks": [
               {"videoId": "kTlv5_Bs8aw", "title": "Bad Bunny - Tití Me Preguntó", "uploader": "Bad Bunny", "durationText": "4:05", "thumbnail": "https://i.ytimg.com/vi/kTlv5_Bs8aw/mqdefault.jpg"},
               {"videoId": "91BU7o_0oq0", "title": "Karol G - PROVENZA", "uploader": "Karol G", "durationText": "3:30", "thumbnail": "https://i.ytimg.com/vi/91BU7o_0oq0/mqdefault.jpg"},
@@ -2223,7 +2235,7 @@
             "id": "pl_hiphop24",
             "name": "Hip-Hop / Rap",
             "description": "Batidas pesadas e rimas afiadas.",
-            "thumbnail": "https://i.ytimg.com/vi/uxpDa-c-4Mc/mqdefault.jpg",
+            "thumbnail": "../assets/playlists/pl_hiphop.png",
             "tracks": [
               {"videoId": "uxpDa-c-4Mc", "title": "Drake - God's Plan", "uploader": "Drake", "durationText": "5:56", "thumbnail": "https://i.ytimg.com/vi/uxpDa-c-4Mc/mqdefault.jpg"},
               {"videoId": "UceaB4D0jpo", "title": "Post Malone - rockstar", "uploader": "Post Malone", "durationText": "4:01", "thumbnail": "https://i.ytimg.com/vi/UceaB4D0jpo/mqdefault.jpg"},
@@ -2234,17 +2246,13 @@
         ];
         
         let existingPlaylists = JSON.parse(localStorage.getItem('livreplay_playlists') || '[]');
-        // Se a pessoa já tinha alguma playlist salva antes dessa atualização, mescla com as novas no final,
-        // mas o ideal é simplesmente setar se não tiver inicializado.
-        if (existingPlaylists.length === 0) {
-          localStorage.setItem('livreplay_playlists', JSON.stringify(defaultPlaylists));
-        } else {
-          // Se ela já tinha playlists, adicionamos as novas.
-          const merged = [...existingPlaylists, ...defaultPlaylists];
-          localStorage.setItem('livreplay_playlists', JSON.stringify(merged));
-        }
         
-        localStorage.setItem('livreplay_playlists_initialized', 'true');
+        // Remove as default antigas para evitar duplicatas, e mescla as novas no final
+        existingPlaylists = existingPlaylists.filter(p => !p.id.startsWith('pl_') || p.id.startsWith('custom_'));
+        
+        const merged = [...existingPlaylists, ...defaultPlaylists];
+        localStorage.setItem('livreplay_playlists', JSON.stringify(merged));
+        localStorage.setItem('livreplay_playlists_initialized_v2', 'true');
       }
 
       renderLibrary();
