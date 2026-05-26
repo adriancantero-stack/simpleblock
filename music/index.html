@@ -1080,7 +1080,9 @@
       'https://invidious.projectsegfau.lt',
       'https://yewtu.be',
       'https://invidious.lunar.icu',
-      'https://invidious.privacydev.net'
+      'https://invidious.privacydev.net',
+      'https://invidious.jing.rocks',
+      'https://inv.tux.pizza'
     ];
 
     const PIPED_API_INSTANCES = [
@@ -1091,7 +1093,9 @@
       'https://pipedapi.synxt.ru',
       'https://api.piped.privacydev.net',
       'https://api.piped.yt',
-      'https://pipedapi.kavin.rocks'
+      'https://pipedapi.kavin.rocks',
+      'https://piped-api.garudalinux.org',
+      'https://pipedapi.smaragd.re'
     ];
 
     let currentSearchResults = [];
@@ -1661,7 +1665,7 @@
       activeTrackId = videoId; // Define o ID da música ativa de forma síncrona instantânea!
       
       const title = cleanTitle || item.title;
-      const author = item.author;
+      const author = item.author || item.uploader || 'Artista Desconhecido';
       const thumb = item.videoThumbnails && item.videoThumbnails.find(t => t.quality === 'medium' || t.quality === 'default')?.url 
         || `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
       
@@ -2393,7 +2397,7 @@
         
         const merged = [...existingPlaylists, ...defaultPlaylists];
         localStorage.setItem('livreplay_playlists', JSON.stringify(merged));
-        localStorage.setItem('livreplay_playlists_initialized_v2', 'true');
+        localStorage.setItem('livreplay_playlists_initialized_v3', 'true');
       }
 
       renderLibrary();
