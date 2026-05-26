@@ -1129,6 +1129,8 @@
       // Habilita API de áudio e autoplay e oculta a reprodução visual (adiciona playsinline=1 para reprodução inline no iOS)
       const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&enablejsapi=1&mute=0&rel=0&modestbranding=1&playsinline=1`;
       document.getElementById('youtubeIframe').src = embedUrl;
+      // Atualiza estado visual imediatamente enquanto o iframe carrega
+      setPlayState(true);
       console.log('Iniciada reprodução de resiliência total via Iframe oculto:', videoId);
       // O estado visual do play/pause será atualizado automaticamente pelo ouvinte de eventos onStateChange do Iframe
     }
@@ -1233,8 +1235,8 @@
         }
       });
 
-      // Limitamos a tentar as 3 melhores instâncias de busca para evitar lag sequencial
-      const topInstances = instancesToTry.slice(0, 3);
+      // Limitamos a tentar as 2 melhores instâncias de busca para evitar lag sequencial
+      const topInstances = instancesToTry.slice(0, 2);
       console.log('Extraindo áudio das principais instâncias de música:', topInstances);
 
       // Função auxiliar para testar a reprodução direta de um URL no elemento de áudio (CORS-free)
@@ -1271,7 +1273,7 @@
             }
           };
           
-          // Timeout otimizado de 1.8 segundos para transições ultra-rápidas
+          // Timeout de 1.5 segundos para não travar o usuário
           const timeoutId = setTimeout(() => {
             if (activeTrackId !== videoId) {
               cleanup();
@@ -1283,7 +1285,7 @@
               cleanup();
               reject(new Error("Timeout ao carregar áudio"));
             }
-          }, 1800);
+          }, 1500);
           
           function cleanup() {
             clearTimeout(timeoutId);
@@ -1692,11 +1694,22 @@
       activeEngine = 'audio';
       document.getElementById('youtubeIframe').src = 'about:blank';
 
-      // Buscar a stream nativa (sem pre-aquecer silentAudio aqui para evitar o bug do duplo clique)
+      // Buscar a stream nativa — com watchdog de 5s para forçar iframe caso tudo falhe silenciosamente
+      const watchdogTimer = setTimeout(() => {
+        if (activeTrackId === videoId && activeEngine === 'audio') {
+          console.warn('Watchdog: nenhuma stream nativa funcionou em 5s, ativando iframe agora.');
+          playIframeFallback(videoId);
+          document.getElementById('spinner').style.display = 'none';
+        }
+      }, 5000);
+
       prefetchAudioStream(videoId).then(() => {
+        clearTimeout(watchdogTimer);
         if (activeTrackId === videoId) {
           document.getElementById('spinner').style.display = 'none';
         }
+      }).catch(() => {
+        clearTimeout(watchdogTimer);
       });
 
       // Atualizar o player inferior
