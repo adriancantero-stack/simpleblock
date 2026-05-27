@@ -1742,6 +1742,13 @@
         // Áudio nativo — lê currentTime diretamente independente de estar pausado
         if (silentAudio.currentTime > 0) {
           updateProgressDisplay(silentAudio.currentTime);
+          
+          // Manual fallback: Algumas streams diretas (itag 140) têm duration = Infinity e nunca disparam o evento 'ended'
+          if (playerDuration > 0 && silentAudio.currentTime >= playerDuration - 0.5 && playStateIsPlaying) {
+            console.log('Fim da música detectado manualmente (fallback)');
+            setPlayState(false);
+            playNextRecommended();
+          }
         }
       }
       // Para iframe: usa tempo de parede para estimar currentTime com precisão
