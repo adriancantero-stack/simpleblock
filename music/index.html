@@ -1614,9 +1614,21 @@
     // Tocar a Música Escolhida
     function playMusic(item, cleanTitle, queue = null) {
       if (queue) {
-        currentQueue = queue;
+        currentQueue = [...queue];
       } else if (currentQueue.length === 0 && currentSearchResults.length > 0) {
-        currentQueue = currentSearchResults;
+        currentQueue = [...currentSearchResults];
+      }
+      
+      if (isShuffle && currentQueue.length > 0) {
+        originalQueue = [...currentQueue];
+        const currentIndex = currentQueue.findIndex(t => t.videoId === item.videoId);
+        if (currentIndex !== -1) {
+          const currentItem = currentQueue.splice(currentIndex, 1)[0];
+          currentQueue = currentQueue.sort(() => Math.random() - 0.5);
+          currentQueue.unshift(currentItem);
+        } else {
+          currentQueue = currentQueue.sort(() => Math.random() - 0.5);
+        }
       }
       
       const videoId = item.videoId;
