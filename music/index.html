@@ -1955,63 +1955,8 @@
 
     // Renderizar itens rápidos no menu lateral
     function renderLibrary() {
-      const list = document.getElementById('libraryList');
-      list.innerHTML = '';
-      
-      const favorites = JSON.parse(localStorage.getItem('livreplay_music_favorites') || '[]');
-      const playlists = JSON.parse(localStorage.getItem('livreplay_playlists') || '[]');
-      
-      if (favorites.length === 0 && playlists.length === 0) {
-        list.innerHTML = '<span style="font-size:12px; color:var(--text-muted); padding-left:12px;">Sua biblioteca está vazia.</span>';
-        return;
-      }
-
-      // 1. Mostrar Músicas Curtidas
-      if (favorites.length > 0) {
-        const favDiv = document.createElement('div');
-        favDiv.className = 'library-item';
-        favDiv.onclick = () => switchView('favoritos');
-        favDiv.innerHTML = `
-          <div class="lib-thumb" style="background: linear-gradient(135deg, #450af5, #c41a88); display: grid; place-items: center; border-radius: 6px;">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-          </div>
-          <div class="lib-info">
-            <h4 class="lib-title">Músicas Curtidas</h4>
-            <p class="lib-author">${favorites.length} música${favorites.length !== 1 ? 's' : ''}</p>
-          </div>
-        `;
-        list.appendChild(favDiv);
-      }
-
-      // 2. Mostrar as Playlists Customizadas
-      playlists.forEach(pl => {
-        const plDiv = document.createElement('div');
-        plDiv.className = 'library-item';
-        plDiv.onclick = () => showPlaylistView(pl.id);
-        
-        const hasTracks = pl.tracks.length > 0;
-        let thumbUrl = '';
-        if (pl.thumbnail) {
-          thumbUrl = pl.thumbnail;
-        } else if (hasTracks) {
-          thumbUrl = pl.tracks[0].videoThumbnails && pl.tracks[0].videoThumbnails.find(t => t.quality === 'medium' || t.quality === 'default')?.url || `https://i.ytimg.com/vi/${pl.tracks[0].videoId}/mqdefault.jpg`;
-        }
-        
-        const thumbHtml = thumbUrl 
-          ? `<img class="lib-thumb" src="${thumbUrl}" loading="lazy">`
-          : `<div class="lib-thumb" style="background: #282828; display: grid; place-items: center; border-radius: 6px;">
-               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-             </div>`;
-             
-        plDiv.innerHTML = `
-          ${thumbHtml}
-          <div class="lib-info">
-            <h4 class="lib-title">${pl.name}</h4>
-            <p class="lib-author">Playlist • ${pl.tracks.length} música${pl.tracks.length !== 1 ? 's' : ''}</p>
-          </div>
-        `;
-        list.appendChild(plDiv);
-      });
+      // Removido da interface na v28 - Função mantida vazia para evitar quebras de chamadas legadas
+      return;
     }
 
     // Gerenciador de Playlists Customizadas
