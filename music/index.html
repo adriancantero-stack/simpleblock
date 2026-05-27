@@ -779,12 +779,16 @@
       
       .player-bar {
         bottom: calc(60px + env(safe-area-inset-bottom));
-        height: 70px;
-        padding: 0 12px;
+        height: 100px;
+        padding: 8px 12px;
+        flex-direction: column;
+        justify-content: center;
+        gap: 6px;
       }
-      .app-layout { height: calc(100dvh - 70px - 60px - env(safe-area-inset-bottom)); }
-      .current-track-info { width: 50%; }
-      .player-controls-container { width: 50%; }
+      .app-layout { height: calc(100dvh - 100px - 60px - env(safe-area-inset-bottom)); }
+      .current-track-info { width: 100%; justify-content: center; margin-bottom: 4px; }
+      .player-controls-container { width: 100%; }
+      .control-buttons { gap: 16px; }
       .volume-controls { display: none; }
       .view-container { padding: 12px; gap: 16px; }
       .music-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
@@ -1225,30 +1229,14 @@
       return list;
     }
 
-    // Testa uma única instância via latest_version (CORS-free, sem fetch)
-    // Retorna a URL se funcionar, rejeita se falhar dentro do timeout
+    // Testa uma única instância via latest_version (CORS-free, sem fetch com Audio, MAS no iOS Safari falha sem play()!)
+    // Então usamos fetch no-cors. Ele resolve se o servidor responder (mesmo com redirect/opaco), rejeita se o servidor estiver off.
     function tryInstanceUrl(instance, videoId) {
       return new Promise((resolve, reject) => {
         const url = `${instance}/latest_version?id=${videoId}&itag=140`;
-        const testAudio = new Audio();
-        let done = false;
-
-        const finish = (ok, result) => {
-          if (done) return;
-          done = true;
-          testAudio.src = '';
-          if (ok) resolve({ url, instance });
-          else reject(new Error('fail'));
-        };
-
-        const timeout = setTimeout(() => finish(false), 2500);
-
-        testAudio.addEventListener('loadedmetadata', () => { clearTimeout(timeout); finish(true); });
-        testAudio.addEventListener('canplay',        () => { clearTimeout(timeout); finish(true); });
-        testAudio.addEventListener('error',          () => { clearTimeout(timeout); finish(false); });
-
-        testAudio.preload = 'metadata';
-        testAudio.src = url;
+        fetch(url, { mode: 'no-cors', signal: AbortSignal.timeout(2500) })
+          .then(() => resolve({ url, instance }))
+          .catch(() => reject(new Error('fail')));
       });
     }
 
