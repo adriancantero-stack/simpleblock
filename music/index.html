@@ -359,6 +359,27 @@
       background: var(--accent-hover);
       transform: scale(1.06) !important;
     }
+    @keyframes btnPulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(30, 215, 96, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(30, 215, 96, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(30, 215, 96, 0); }
+    }
+    .play-float-btn.loading {
+      opacity: 1 !important;
+      transform: translateY(0) scale(1) !important;
+      animation: btnPulse 1.5s infinite;
+      cursor: wait;
+    }
+    .play-float-btn.loading svg { display: none; }
+    .play-float-btn.loading::after {
+      content: '';
+      width: 16px;
+      height: 16px;
+      border: 3px solid #000;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spinner 0.8s linear infinite;
+    }
 
     .music-info {
       display: flex;
@@ -1093,6 +1114,7 @@
 
     // === CONTROLES DO PLAYER IFRAME HÍBRIDO HIDE/FALLBACK ===
     function playIframeFallback(videoId) {
+      document.querySelectorAll('.play-float-btn.loading').forEach(b => b.classList.remove('loading'));
       activeEngine = 'iframe';
       silentAudio.pause();
       
@@ -1570,6 +1592,7 @@
         
         const card = document.createElement('div');
         card.className = 'music-card';
+        card.dataset.videoId = videoId;
         card.onclick = () => playMusic(item, cleanTitle, items);
         
         card.innerHTML = `
@@ -1604,10 +1627,19 @@
       const thumb = item.videoThumbnails && item.videoThumbnails.find(t => t.quality === 'medium' || t.quality === 'default')?.url 
         || `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
       
-      // Spinner só aparece se demorar mais de 200ms (cache hit = sem spinner!)
+      // Remove loading state de qualquer botão anterior
+      document.querySelectorAll('.play-float-btn.loading').forEach(b => b.classList.remove('loading'));
+      
+      const card = document.querySelector(`.music-card[data-video-id="${videoId}"]`);
+      let loadingBtn = null;
+      if (card) {
+        loadingBtn = card.querySelector('.play-float-btn');
+      }
+
+      // Animação de loading só aparece no card se demorar mais de 200ms
       const spinnerTimer = setTimeout(() => {
-        if (activeTrackId === videoId) {
-          document.getElementById('spinner').style.display = 'block';
+        if (activeTrackId === videoId && loadingBtn) {
+          loadingBtn.classList.add('loading');
         }
       }, 200);
 
@@ -1640,7 +1672,7 @@
           console.warn('Watchdog: ativando iframe agora.');
           playIframeFallback(videoId);
           clearTimeout(spinnerTimer);
-          document.getElementById('spinner').style.display = 'none';
+          document.querySelectorAll('.play-float-btn.loading').forEach(b => b.classList.remove('loading'));
         }
       }, 3500);
 
@@ -1648,12 +1680,12 @@
         clearTimeout(watchdogTimer);
         clearTimeout(spinnerTimer);
         if (activeTrackId === videoId) {
-          document.getElementById('spinner').style.display = 'none';
+          document.querySelectorAll('.play-float-btn.loading').forEach(b => b.classList.remove('loading'));
         }
       }).catch(() => {
         clearTimeout(watchdogTimer);
         clearTimeout(spinnerTimer);
-        document.getElementById('spinner').style.display = 'none';
+        document.querySelectorAll('.play-float-btn.loading').forEach(b => b.classList.remove('loading'));
       });
 
       // Atualizar o player inferior
@@ -1735,6 +1767,8 @@
 
     let iframePlayStartTime = 0;
     let iframePlayStartWallClock = 0;
+    let lastAudioCurrentTime = -1;
+    let audioStuckCount = 0;
 
     setInterval(() => {
       if (!currentlyPlayingVideo) return;
@@ -1743,9 +1777,17 @@
         if (silentAudio.currentTime > 0) {
           updateProgressDisplay(silentAudio.currentTime);
           
-          // Manual fallback: Algumas streams diretas (itag 140) têm duration = Infinity e nunca disparam o evento 'ended'
-          if (playerDuration > 0 && silentAudio.currentTime >= playerDuration - 0.5 && playStateIsPlaying) {
-            console.log('Fim da música detectado manualmente (fallback)');
+          if (silentAudio.currentTime === lastAudioCurrentTime && playStateIsPlaying) {
+             audioStuckCount++;
+          } else {
+             audioStuckCount = 0;
+             lastAudioCurrentTime = silentAudio.currentTime;
+          }
+
+          // Manual fallback: se o audio parar de avançar por 2 segundos nos últimos 15s (ou no final da música)
+          if (audioStuckCount >= 4 && playerDuration > 0 && (silentAudio.currentTime > playerDuration - 15 || silentAudio.currentTime > playerDuration * 0.9)) {
+            console.log('Fim da música detectado por congelamento de stream (fallback)');
+            audioStuckCount = 0;
             setPlayState(false);
             playNextRecommended();
           }
