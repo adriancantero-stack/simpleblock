@@ -1784,7 +1784,13 @@
              lastAudioCurrentTime = silentAudio.currentTime;
           }
 
-          // Manual fallback: se o audio parar de avançar por 2 segundos nos últimos 15s (ou no final da música)
+          // DJ Mode: Começa a próxima música faltando 3 segundos para evitar silêncio (estilo DJ)
+          if (playerDuration > 0 && silentAudio.currentTime >= playerDuration - 3 && playStateIsPlaying) {
+            console.log('DJ Mode: Transição suave faltando 3s para acabar!');
+            playNextRecommended();
+          }
+
+          // Manual fallback: se o audio parar de avançar por 2 segundos nos últimos 15s (caso o DJ Mode falhe)
           if (audioStuckCount >= 4 && playerDuration > 0 && (silentAudio.currentTime > playerDuration - 15 || silentAudio.currentTime > playerDuration * 0.9)) {
             console.log('Fim da música detectado por congelamento de stream (fallback)');
             audioStuckCount = 0;
@@ -1798,6 +1804,11 @@
         const elapsed = (Date.now() - iframePlayStartWallClock) / 1000;
         const estimated = iframePlayStartTime + elapsed;
         updateProgressDisplay(Math.min(estimated, playerDuration || estimated));
+        
+        if (playerDuration > 0 && estimated >= playerDuration - 3) {
+           console.log('DJ Mode: Transição suave no iframe faltando 3s para acabar!');
+           playNextRecommended();
+        }
       }
     }, 500);
 
