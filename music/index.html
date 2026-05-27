@@ -1245,22 +1245,13 @@
       return list;
     }
 
-    // Testa uma instância verificando se a API retorna os formatos de áudio corretamente
-    // Isso garante que a instância está viva, não limitando taxa (429), e contorna o bloqueio do Safari
+    // Testa uma instância usando fetch no-cors no latest_version
+    // Resolve se a rede conectar, evitando bloqueios de CORS e bloqueios de Audio do Safari
     function tryInstanceUrl(instance, videoId) {
       return new Promise((resolve, reject) => {
-        const url = `${instance}/api/v1/videos/${videoId}`;
-        fetch(url, { signal: AbortSignal.timeout(3000) })
-          .then(res => {
-            if (!res.ok) throw new Error('Status not ok');
-            return res.json();
-          })
-          .then(data => {
-            if (data.error) throw new Error(data.error);
-            const format = (data.formatStreams || []).find(f => f.itag === '140' || f.itag === 140);
-            if (format && format.url) resolve({ url: format.url, instance });
-            else resolve({ url: `${instance}/latest_version?id=${videoId}&itag=140`, instance }); // Fallback
-          })
+        const url = `${instance}/latest_version?id=${videoId}&itag=140`;
+        fetch(url, { mode: 'no-cors', signal: AbortSignal.timeout(2500) })
+          .then(() => resolve({ url, instance }))
           .catch(() => reject(new Error('fail')));
       });
     }
@@ -1355,18 +1346,9 @@
         const instances = getAllInstances();
         const races = instances.map(inst => {
           return new Promise((resolve, reject) => {
-            const url = `${inst}/api/v1/videos/${nextId}`;
-            fetch(url, { signal: AbortSignal.timeout(3000) })
-              .then(res => {
-                if (!res.ok) throw new Error('not ok');
-                return res.json();
-              })
-              .then(data => {
-                if (data.error) throw new Error(data.error);
-                const format = (data.formatStreams || []).find(f => f.itag === '140' || f.itag === 140);
-                if (format && format.url) resolve({ url: format.url, instance: inst });
-                else resolve({ url: `${inst}/latest_version?id=${nextId}&itag=140`, instance: inst });
-              })
+            const url = `${inst}/latest_version?id=${nextId}&itag=140`;
+            fetch(url, { mode: 'no-cors', signal: AbortSignal.timeout(3000) })
+              .then(() => resolve({ url, instance: inst }))
               .catch(reject);
           });
         });
@@ -1817,16 +1799,24 @@
 
           // DJ Mode: Começa a próxima música faltando 3 segundos para evitar silêncio (estilo DJ)
           if (playerDuration > 0 && silentAudio.currentTime >= playerDuration - 3 && playStateIsPlaying) {
-            console.log('DJ Mode: Transição suave faltando 3s para acabar!');
-            playNextRecommended();
+            console.log('DJ Mode: Forçando evento ended para transição suave no iOS');
+            // No iOS Safari, alterar o src e tocar a partir de um setInterval é bloqueado.
+            // Pular para o final aciona o evento 'ended' nativo, onde o Safari permite o autoplay em cadeia!
+            if (silentAudio.duration && silentAudio.currentTime < silentAudio.duration - 0.5) {
+               silentAudio.currentTime = silentAudio.duration - 0.1;
+            }
           }
 
           // Manual fallback: se o audio parar de avançar por 2 segundos nos últimos 15s (caso o DJ Mode falhe)
           if (audioStuckCount >= 4 && playerDuration > 0 && (silentAudio.currentTime > playerDuration - 15 || silentAudio.currentTime > playerDuration * 0.9)) {
             console.log('Fim da música detectado por congelamento de stream (fallback)');
             audioStuckCount = 0;
-            setPlayState(false);
-            playNextRecommended();
+            if (silentAudio.duration && silentAudio.currentTime < silentAudio.duration - 0.5) {
+               silentAudio.currentTime = silentAudio.duration - 0.1;
+            } else {
+               setPlayState(false);
+               playNextRecommended();
+            }
           }
         }
       }
