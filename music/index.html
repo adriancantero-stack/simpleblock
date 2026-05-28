@@ -1118,6 +1118,36 @@
     // TTL: URLs ficam válidas por 55 minutos (YouTube expira em ~6h mas queremos margem)
     const STREAM_CACHE_TTL = 55 * 60 * 1000;
 
+    // 🌐 Gateway de API Dedicado (Cloudflare Worker de Produção)
+    const CLOUDFLARE_GATEWAY = 'https://livreplay-gateway.adrian-cantero1.workers.dev/';
+
+    async function fetchStreamUrlFromGateway(videoId) {
+      const cached = streamUrlCache.get(videoId);
+      if (cached && (Date.now() - cached.ts) < STREAM_CACHE_TTL) {
+        console.log(`⚡ Gateway Cache hit para ${videoId}`);
+        return cached.url;
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2500); // Limite de 2.5s para resposta ultra-rápida
+        const res = await fetch(`${CLOUDFLARE_GATEWAY}?id=${videoId}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.url) {
+            streamUrlCache.set(videoId, { url: data.url, ts: Date.now() });
+            console.log(`⚡ URL obtida via Cloudflare Gateway para ${videoId}`);
+            return data.url;
+          }
+        }
+      } catch (e) {
+        console.warn(`[Gateway] Falha ao obter URL via Cloudflare Worker para ${videoId}:`, e);
+      }
+      return null;
+    }
+
     // Guarda qual videoId está sendo pré-aquecido para não duplicar requests
     const prefetchingSet = new Set();
 
@@ -1643,6 +1673,16 @@
         card.className = 'music-card';
         card.dataset.videoId = videoId;
         card.onclick = () => playMusic(item, cleanTitle, cleanQueue);
+
+        // 🔮 Pré-busca inteligente por Toque (Mobile) ou Hover (Desktop) para latência zero no clique
+        const prefetchStream = () => {
+          if (!streamUrlCache.has(videoId)) {
+            console.log(`🔮 Pré-buscando URL via toque/hover para ${videoId}`);
+            fetchStreamUrlFromGateway(videoId).catch(() => {});
+          }
+        };
+        card.addEventListener('mouseenter', prefetchStream, { once: true });
+        card.addEventListener('touchstart', prefetchStream, { once: true, passive: true });
         
         card.innerHTML = `
           <div class="art-wrapper">
@@ -1761,8 +1801,16 @@
         // Áudio desbloqueado com sucesso! Pausa temporariamente para aguardar a busca da URL real
         silentAudio.pause();
 
-        // Faz a busca da URL real (de forma assíncrona, usando cache se houver)
-        raceFetchStreamUrl(videoId).then(streamUrl => {
+        // Faz a busca da URL real
+        // 1. Tenta obter a URL via Cloudflare Worker Gateway dedicado (Alta performance, < 100ms)
+        fetchStreamUrlFromGateway(videoId).then(streamUrl => {
+          if (streamUrl) {
+            return streamUrl;
+          }
+          // 2. Fallback Secundário: Corrida paralela em instâncias públicas do Invidious (O que já tínhamos funcionando!)
+          console.warn('[Gateway] Falhou ou retornou vazio. Ativando fallback Invidious...');
+          return raceFetchStreamUrl(videoId);
+        }).then(streamUrl => {
           if (activeTrackId !== videoId) {
             clearTimeout(watchdogTimer);
             return; // Usuário já escolheu outra música
@@ -1801,7 +1849,7 @@
             }
           }
         }).catch(err => {
-          console.warn('Corrida paralela falhou:', err);
+          console.warn('Busca de stream falhou em todos os estágios:', err);
           if (activeTrackId === videoId) {
             clearTimeout(watchdogTimer);
             clearTimeout(spinnerTimer);
@@ -2435,6 +2483,16 @@
         row.onmouseover = () => row.style.background = 'rgba(255, 255, 255, 0.08)';
         row.onmouseout = () => row.style.background = 'rgba(255, 255, 255, 0.02)';
         row.onclick = () => playMusic(item, cleanTitle, items);
+
+        // 🔮 Pré-busca inteligente por Toque (Mobile) ou Hover (Desktop) para latência zero no clique
+        const prefetchStream = () => {
+          if (!streamUrlCache.has(videoId)) {
+            console.log(`🔮 Pré-buscando URL via toque/hover na playlist para ${videoId}`);
+            fetchStreamUrlFromGateway(videoId).catch(() => {});
+          }
+        };
+        row.addEventListener('mouseenter', prefetchStream, { once: true });
+        row.addEventListener('touchstart', prefetchStream, { once: true, passive: true });
         
         const duration = item.durationText || (item.lengthSeconds ? formatTime(item.lengthSeconds) : '');
         const durationHtml = duration ? `<div style="font-size: 13px; color: var(--text-muted); margin-left: 12px; font-variant-numeric: tabular-nums;">${duration}</div>` : '';
