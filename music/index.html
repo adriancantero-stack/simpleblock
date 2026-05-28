@@ -282,120 +282,79 @@
       letter-spacing: -0.02em;
     }
 
-    /* Grid de Músicas (Álbuns) */
+    /* Grid de Músicas (Transformado em Lista Estilo Spotify) */
     .music-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
     }
 
     .music-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      padding: 16px;
-      border-radius: var(--radius-lg);
+      background: transparent;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
       cursor: pointer;
       transition: var(--transition);
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
+      align-items: center;
+      gap: 16px;
       position: relative;
       min-width: 0;
-      min-height: 0;
+      width: 100%;
       overflow: hidden;
     }
     .music-card:hover {
-      background: var(--bg-card-hover);
-      transform: translateY(-4px);
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+      background: rgba(255, 255, 255, 0.05);
+      transform: none;
+      box-shadow: none;
     }
 
     .art-wrapper {
       position: relative;
-      aspect-ratio: 1/1;
-      width: 100%;
-      border-radius: var(--radius);
+      width: 48px;
+      height: 48px;
+      min-width: 48px;
+      min-height: 48px;
+      border-radius: 6px;
       overflow: hidden;
-      margin-bottom: 16px;
+      margin-bottom: 0;
       background: #151515;
+      flex-shrink: 0;
     }
     .art-img {
       width: 100%;
       height: 100%;
-      max-width: 100%;
-      object-fit: contain;
-      background-color: #000;
+      object-fit: cover;
       transition: var(--transition);
     }
     .music-card:hover .art-img {
-      transform: scale(1.04);
+      transform: none;
     }
 
-    /* Botão de play flutuante verde estilo Spotify */
     .play-float-btn {
-      position: absolute;
-      bottom: 8px;
-      right: 8px;
-      width: 48px;
-      height: 48px;
-      background: var(--accent);
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      color: #000;
-      opacity: 0;
-      transform: translateY(8px);
-      transition: var(--transition);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-    }
-    .play-float-btn svg {
-      width: 22px;
-      height: 22px;
-      fill: currentColor;
-    }
-    .music-card:hover .play-float-btn {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    .play-float-btn:hover {
-      background: var(--accent-hover);
-      transform: scale(1.06) !important;
-    }
-    @keyframes btnPulse {
-      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(30, 215, 96, 0.7); }
-      70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(30, 215, 96, 0); }
-      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(30, 215, 96, 0); }
-    }
-    .play-float-btn.loading {
-      opacity: 1 !important;
-      transform: translateY(0) scale(1) !important;
-      animation: btnPulse 1.5s infinite;
-      cursor: wait;
-    }
-    .play-float-btn.loading svg { display: none; }
-    .play-float-btn.loading::after {
-      content: '';
-      width: 16px;
-      height: 16px;
-      border: 3px solid #000;
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spinner 0.8s linear infinite;
+      display: none !important;
     }
 
     .music-info {
       display: flex;
       flex-direction: column;
       gap: 4px;
+      flex: 1;
+      min-width: 0;
     }
     .music-title {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 600;
+      color: #fff;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .music-author {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--text-muted);
       white-space: nowrap;
       overflow: hidden;
@@ -823,12 +782,12 @@
       .control-buttons { gap: 16px; }
       .volume-controls { display: none; }
       .view-container { padding: 12px; gap: 16px; }
-      .music-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-      .music-card { padding: 8px; border-radius: var(--radius); }
-      .music-card:hover { transform: none; }
-      .music-title { font-size: 11px; }
-      .music-author { font-size: 9px; }
-      .art-wrapper { margin-bottom: 8px; }
+      .music-grid { display: flex; flex-direction: column; gap: 8px; }
+      .music-card { padding: 6px 8px; border-radius: 8px; gap: 12px; }
+      .music-card:hover { transform: none; background: rgba(255, 255, 255, 0.03); }
+      .music-title { font-size: 13px; }
+      .music-author { font-size: 11px; }
+      .art-wrapper { width: 40px; height: 40px; min-width: 40px; min-height: 40px; margin-bottom: 0; }
       .top-bar { padding: 12px 16px; }
       #shareTrackBtn { display: none !important; }
     }
@@ -1589,13 +1548,15 @@
       });
     }
 
-    // Renderizar o Grid de Cards
+    // Renderizar o Grid de Cards (Lista Estilo Spotify)
     function renderGrid(items, gridElement) {
       gridElement.innerHTML = '';
       if (!items || items.length === 0) {
         gridElement.innerHTML = '<p class="empty-text" style="color: var(--text-muted); padding: 20px;">Nenhuma música encontrada.</p>';
         return;
       }
+
+      const favorites = JSON.parse(localStorage.getItem('livreplay_music_favorites') || '[]');
 
       items.forEach(item => {
         const videoId = item.videoId;
@@ -1605,10 +1566,12 @@
                                      .replace(/[\(\[][Vv]ídeo.*[\)\]]/, '')
                                      .replace(/[\(\[][L]yrics.*[\)\]]/i, '')
                                      .trim();
-        const author = item.author;
+        const author = item.author || 'Artista Desconhecido';
         const thumbnail = item.videoThumbnails && item.videoThumbnails.find(t => t.quality === 'medium' || t.quality === 'default')?.url 
           || `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
         
+        const isFav = favorites.some(v => v.videoId === videoId);
+
         const card = document.createElement('div');
         card.className = 'music-card';
         card.dataset.videoId = videoId;
@@ -1617,13 +1580,18 @@
         card.innerHTML = `
           <div class="art-wrapper">
             <img class="art-img" src="${thumbnail}" alt="${cleanTitle}" loading="lazy" onerror="this.onerror=null; this.src='https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(cleanTitle)}';">
-            <div class="play-float-btn">
-              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-            </div>
           </div>
           <div class="music-info">
             <h3 class="music-title">${cleanTitle}</h3>
             <p class="music-author">${author}</p>
+          </div>
+          <div class="track-actions" style="display: flex; align-items: center; gap: 20px; color: var(--text-muted); padding-right: 8px;">
+            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: ${isFav ? '#1db954' : 'none'}; stroke: ${isFav ? '#1db954' : 'currentColor'}; stroke-width: 2.2; cursor: pointer; transition: all 0.2s;" onclick="toggleFavoriteItem('${videoId}', event);">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: currentColor; opacity: 0.5;">
+              <circle cx="12" cy="12" r="1.5"/><circle cx="6" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/>
+            </svg>
           </div>
         `;
         gridElement.appendChild(card);
@@ -2103,6 +2071,55 @@
       // Se a view de favoritos estiver aberta, re-renderiza ela na hora
       if (document.getElementById('viewFavoritos').style.display === 'flex') {
         renderFavoritesView();
+      }
+    }
+
+    function toggleFavoriteItem(videoId, event) {
+      if (event) event.stopPropagation();
+      let track = currentSearchResults.find(t => t.videoId === videoId) || 
+                  currentQueue.find(t => t.videoId === videoId) ||
+                  (currentlyPlayingVideo && currentlyPlayingVideo.videoId === videoId ? currentlyPlayingVideo : null);
+                  
+      if (!track) {
+        const history = JSON.parse(localStorage.getItem('livreplay_music_history') || '[]');
+        track = history.find(t => t.videoId === videoId);
+      }
+      if (!track) return;
+      
+      let favorites = JSON.parse(localStorage.getItem('livreplay_music_favorites') || '[]');
+      const isFav = favorites.some(v => v.videoId === videoId);
+      
+      if (isFav) {
+        favorites = favorites.filter(v => v.videoId !== videoId);
+      } else {
+        favorites.unshift({
+          videoId: track.videoId,
+          title: track.title,
+          author: track.author || track.uploader || 'Artista Desconhecido',
+          lengthSeconds: track.lengthSeconds || 0,
+          videoThumbnails: track.videoThumbnails || []
+        });
+      }
+      
+      localStorage.setItem('livreplay_music_favorites', JSON.stringify(favorites));
+      
+      // Atualiza o botão da barra inferior se for a música ativa
+      if (currentlyPlayingVideo && currentlyPlayingVideo.videoId === videoId) {
+        updateFavoriteButtonState(videoId);
+      }
+      
+      // Re-renderiza as listas ativas para refletir a mudança imediatamente
+      const grid = document.getElementById('searchGrid');
+      if (grid && grid.innerHTML !== '' && grid.style.display !== 'none') {
+        renderGrid(currentSearchResults, grid);
+      }
+      const favGrid = document.getElementById('favoritesGrid');
+      if (favGrid && favGrid.innerHTML !== '' && document.getElementById('viewFavoritos').style.display === 'flex') {
+        renderFavoritesView();
+      }
+      const histGrid = document.getElementById('recentesGrid');
+      if (histGrid && histGrid.innerHTML !== '' && document.getElementById('viewRecentes').style.display === 'flex') {
+        renderRecentesView();
       }
     }
 
