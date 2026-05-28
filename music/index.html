@@ -1688,6 +1688,10 @@
       activeEngine = 'audio';
       document.getElementById('youtubeIframe').src = 'about:blank';
 
+      // Restaura o volume do usuário para a nova música (cancela o fade-out anterior)
+      const userVolume = parseFloat(localStorage.getItem('livreplay_volume') || '0.8');
+      silentAudio.volume = userVolume;
+
       // 📱 iOS Keep-Alive Hack: Ativa o canal de áudio duplo silencioso e ininterrupto
       if (isIOS) {
         try {
@@ -1867,14 +1871,23 @@
              lastAudioCurrentTime = silentAudio.currentTime;
           }
 
-          // DJ Mode: Começa a próxima música faltando 3 segundos para evitar silêncio (estilo DJ)
-          if (playerDuration > 0 && silentAudio.currentTime >= playerDuration - 3 && playStateIsPlaying) {
-            console.log('DJ Mode: Forçando evento ended para transição suave no iOS');
-            // No iOS Safari, alterar o src e tocar a partir de um setInterval é bloqueado.
-            // Pular para o final aciona o evento 'ended' nativo, onde o Safari permite o autoplay em cadeia!
-            if (silentAudio.duration && silentAudio.currentTime < silentAudio.duration - 0.5) {
-               silentAudio.currentTime = silentAudio.duration - 0.1;
+          // DJ Mode: Esmaecimento de volume (fade-out) suave nos últimos 4 segundos
+          const userVolume = parseFloat(localStorage.getItem('livreplay_volume') || '0.8');
+          const secondsRemaining = Math.max(0, playerDuration - silentAudio.currentTime);
+
+          if (secondsRemaining <= 4 && playStateIsPlaying) {
+            const fadeFactor = Math.max(0, secondsRemaining / 4.0); // 1.0 down to 0.0
+            silentAudio.volume = userVolume * fadeFactor;
+            
+            // Avança para a próxima música quando faltar menos de 0.5s de forma imperceptível
+            if (secondsRemaining <= 0.5) {
+              console.log('DJ Mode: Transição suave ao final da música');
+              setPlayState(false);
+              playNextRecommended();
             }
+          } else if (playStateIsPlaying) {
+            // Garante que o volume seja mantido no nível configurado pelo usuário fora do fade-out
+            silentAudio.volume = userVolume;
           }
 
           // Manual fallback: se o audio parar de avançar por 2 segundos nos últimos 15s (caso o DJ Mode falhe)
@@ -1896,9 +1909,20 @@
         const estimated = iframePlayStartTime + elapsed;
         updateProgressDisplay(Math.min(estimated, playerDuration || estimated));
         
-        if (playerDuration > 0 && estimated >= playerDuration - 3) {
-           console.log('DJ Mode: Transição suave no iframe faltando 3s para acabar!');
-           playNextRecommended();
+        const userVolume = parseFloat(localStorage.getItem('livreplay_volume') || '0.8');
+        const secondsRemaining = Math.max(0, (playerDuration || estimated) - estimated);
+
+        if (secondsRemaining <= 4) {
+          const fadeFactor = Math.max(0, secondsRemaining / 4.0);
+          const currentVol = Math.round(userVolume * fadeFactor * 100);
+          sendIframeCommand('setVolume', [currentVol]);
+          
+          if (secondsRemaining <= 0.5) {
+             console.log('DJ Mode: Transição suave no iframe ao final da música');
+             playNextRecommended();
+          }
+        } else {
+          sendIframeCommand('setVolume', [userVolume * 100]);
         }
       }
     }, 500);
