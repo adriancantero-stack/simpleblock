@@ -1265,7 +1265,7 @@
       return new Promise((resolve, reject) => {
         // Tenta buscar o formato de áudio direto via API com um proxy CORS para contornar bloqueios do Safari
         const apiUrl = `${instance}/api/v1/videos/${videoId}`;
-        const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
+        const proxiedUrl = `https://corsproxy.io/?url=${encodeURIComponent(apiUrl)}`;
         
         fetch(proxiedUrl, { signal: AbortSignal.timeout(3000) })
           .then(res => {
@@ -1289,12 +1289,22 @@
               if (anyAudio && anyAudio.url) {
                 resolve({ url: anyAudio.url, instance });
               } else {
+                if (isIOS) {
+                  reject(new Error('no audio format found on ios'));
+                  return;
+                }
                 resolve({ url: `${instance}/latest_version?id=${videoId}&itag=140`, instance });
               }
             }
           })
           .catch(() => {
-            // Queda segura para o redirect original em caso de erro da API ou do Proxy CORS
+            if (isIOS) {
+              // No iOS, rejeitamos imediatamente para que a corrida tente outras instâncias
+              // em vez de resolver com um redirect 302 que falharia na tag <audio>.
+              reject(new Error('direct api failed on ios'));
+              return;
+            }
+            // Queda segura para o redirect original em caso de erro da API ou do Proxy CORS (desktop/android)
             const fallbackUrl = `${instance}/latest_version?id=${videoId}&itag=140`;
             fetch(fallbackUrl, { mode: 'no-cors', signal: AbortSignal.timeout(2000) })
               .then(() => resolve({ url: fallbackUrl, instance }))
