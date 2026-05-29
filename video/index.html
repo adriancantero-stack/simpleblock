@@ -754,7 +754,7 @@
       position: absolute;
       top: 0;
       bottom: 0;
-      width: 20%;
+      width: 15%; /* Reduzido de 20% para 15% para evitar sobreposição ao centro */
       z-index: 9;
       display: flex;
       align-items: center;
@@ -1912,15 +1912,30 @@
       }
 
       function handleDoubleTap(zone, side) {
-        zone.addEventListener('click', () => {
-          if (side === 'left') {
-            const newTime = Math.max(0, playerCurrentTime - 10);
-            sendPlayerCommand('seekTo', [newTime, true]);
-            showFeedback(leftFeedback);
-          } else {
-            const newTime = playerCurrentTime + 10;
-            sendPlayerCommand('seekTo', [newTime, true]);
-            showFeedback(rightFeedback);
+        let tapCount = 0;
+        let tapTimer = null;
+        
+        zone.addEventListener('click', (e) => {
+          tapCount++;
+          if (tapCount === 1) {
+            // Inicia o timer do primeiro clique
+            tapTimer = setTimeout(() => {
+              tapCount = 0; // Reset se não houver segundo clique a tempo
+            }, 300);
+          } else if (tapCount === 2) {
+            // Duplo clique confirmado!
+            clearTimeout(tapTimer);
+            tapCount = 0;
+            
+            if (side === 'left') {
+              const newTime = Math.max(0, playerCurrentTime - 10);
+              sendPlayerCommand('seekTo', [newTime, true]);
+              showFeedback(leftFeedback);
+            } else {
+              const newTime = playerCurrentTime + 10;
+              sendPlayerCommand('seekTo', [newTime, true]);
+              showFeedback(rightFeedback);
+            }
           }
         });
       }
