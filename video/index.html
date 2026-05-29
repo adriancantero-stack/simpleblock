@@ -2430,7 +2430,16 @@
       // Habilita a API Javascript do YouTube
       const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&fs=1&enablejsapi=1${startParam}`;
       
-      document.getElementById('activeUrl').innerText = videoItem.title;
+      const isFollowed = isChannelFollowed(videoItem.author);
+      document.getElementById('activeUrl').innerHTML = `
+        <span style="color:var(--text-primary);font-weight:500;">${videoItem.author}</span>
+        <button class="channel-follow-btn ${isFollowed ? 'following' : ''}" style="margin: 0 4px;" title="${isFollowed ? 'Deixar de seguir' : 'Seguir canal'}" onclick="event.stopPropagation();handleFollowBtnClick(this,'${videoItem.author.replace(/'/g,"\\'")}')" data-channel="${videoItem.author}">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <span style="opacity:0.6;">• ${videoItem.title}</span>
+      `;
+      document.getElementById('activeUrl').style.display = 'flex';
+      document.getElementById('activeUrl').style.alignItems = 'center';
       
       const iframe = document.getElementById('browserIframe');
       iframe.src = embedUrl;
