@@ -1835,7 +1835,6 @@
       isAudioOnly = !isAudioOnly;
       const btn = document.getElementById('audioOnlyBtn');
       const panel = document.getElementById('audioOnlyPanel');
-      const iframe = document.getElementById('browserIframe');
 
       if (isAudioOnly) {
         btn.classList.add('active');
@@ -1847,13 +1846,15 @@
           document.getElementById('audioOnlyTitle').textContent = vid.title || 'Carregando...';
           document.getElementById('audioOnlyAuthor').textContent = vid.author || '';
         }
-        // Muta o iframe para economizar dados (somente áudio via silentAudio)
-        sendPlayerCommand('mute');
+        // NÃO muta o iframe aqui — o prefetchAudioStream já gerencia o mute/unmute
+        // de acordo com se a stream nativa funcionou ou não.
+        // Mutar aqui causaria silêncio quando o fallback do iframe está ativo.
         showToast('🎵 Modo Somente Áudio ativado');
       } else {
         btn.classList.remove('active');
         panel.classList.remove('active');
-        sendPlayerCommand('unmute');
+        // NÃO chama unmute aqui — se o iframe já estava mutado pelo prefetchAudioStream,
+        // deve permanecer mutado (áudio via silentAudio). Se não estava, não precisa mudar.
         showToast('🎬 Voltando ao vídeo');
       }
     }
