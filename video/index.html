@@ -1563,7 +1563,7 @@
           <div class="gesture-feedback" id="gestureRightFeedback">10s ⏩</div>
         </div>
 
-        <iframe id="browserIframe" name="browserIframe" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"></iframe>
+        <iframe id="browserIframe" name="browserIframe" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" onload="try{this.contentWindow.postMessage(JSON.stringify({event: 'listening'}), '*');}catch(e){}"></iframe>
         
         <!-- Painel Áudio Only -->
         <div id="audioOnlyPanel">
@@ -2480,6 +2480,11 @@
       
       const iframe = document.getElementById('browserIframe');
       iframe.src = embedUrl;
+      
+      // Garante que o iframe começará a relatar eventos de progresso e estado para a nossa janela
+      setTimeout(() => {
+        try { iframe.contentWindow.postMessage(JSON.stringify({event: 'listening'}), '*'); } catch(e){}
+      }, 500);
       
       document.getElementById('browserView').classList.add('active');
       
