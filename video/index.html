@@ -2312,13 +2312,13 @@
     });
 
     // Busca os dados e renderiza os cards
-    async function searchAndRender(query) {
+    async function searchAndRender(query, sortByDate = false) {
       document.getElementById('loading').classList.add('active');
       document.getElementById('resultsUrlInput').value = query;
       document.getElementById('urlInput').value = query;
       
       try {
-        const { instance, data } = await fetchSearch(query);
+        const { instance, data } = await fetchSearch(query, sortByDate);
         const grid = document.getElementById('resultsGrid');
         grid.innerHTML = '';
         
