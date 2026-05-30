@@ -1691,6 +1691,9 @@
         card.addEventListener('mouseenter', prefetchStream, { once: true });
         card.addEventListener('touchstart', prefetchStream, { once: true, passive: true });
         
+        const duration = item.durationText || (item.lengthSeconds ? formatTime(item.lengthSeconds) : '');
+        const durationHtml = duration ? `<span style="font-size: 13px; color: var(--text-muted); margin-right: 12px; font-variant-numeric: tabular-nums;">${duration}</span>` : '';
+
         card.innerHTML = `
           <div class="art-wrapper">
             <img class="art-img" src="${thumbnail}" alt="${cleanTitle}" loading="lazy" onerror="this.onerror=null; this.src='https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(cleanTitle)}';">
@@ -1700,6 +1703,7 @@
             <p class="music-author">${author}</p>
           </div>
           <div class="track-actions" style="display: flex; align-items: center; padding-right: 8px;">
+            ${durationHtml}
             <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; fill: ${isFav ? '#1db954' : 'none'}; stroke: ${isFav ? '#1db954' : 'currentColor'}; stroke-width: 2.2; cursor: pointer; transition: all 0.2s;" onclick="toggleFavoriteItem('${videoId}', event);">
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
             </svg>
