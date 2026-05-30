@@ -678,6 +678,11 @@
       background: rgba(255, 59, 48, 0.15);
       border-color: rgba(255, 59, 48, 0.3);
     }
+    .browser-action-btn.following {
+      color: #ffd60a;
+      background: rgba(255, 214, 10, 0.15);
+      border-color: rgba(255, 214, 10, 0.3);
+    }
 
     .iframe-wrapper {
       flex: 1;
@@ -1524,6 +1529,11 @@
             <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
             <polyline points="16 6 12 2 8 6"/>
             <line x1="12" y1="2" x2="12" y2="15"/>
+          </svg>
+        </button>
+        <button class="browser-action-btn focusable" id="playerFollowBtn" onclick="togglePlayerFollow()" aria-label="Seguir Canal" title="Seguir Canal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
           </svg>
         </button>
         <button class="heart-btn focusable" id="favoriteToggleBtn" onclick="toggleFavoriteCurrent()" aria-label="Favoritar">
@@ -2456,16 +2466,13 @@
       // Habilita a API Javascript do YouTube
       const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&fs=1&enablejsapi=1${startParam}`;
       
+      document.getElementById('activeUrl').innerText = videoItem.title;
+      document.getElementById('activeUrl').style.display = '';
+      
       const isFollowed = isChannelFollowed(videoItem.author);
-      document.getElementById('activeUrl').innerHTML = `
-        <span style="color:var(--text-primary);font-weight:500;">${videoItem.author}</span>
-        <button class="channel-follow-btn ${isFollowed ? 'following' : ''}" style="margin: 0 4px;" title="${isFollowed ? 'Deixar de seguir' : 'Seguir canal'}" onclick="event.stopPropagation();handleFollowBtnClick(this,'${videoItem.author.replace(/'/g,"\\'")}')" data-channel="${videoItem.author}">
-          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        </button>
-        <span style="opacity:0.6;">• ${videoItem.title}</span>
-      `;
-      document.getElementById('activeUrl').style.display = 'flex';
-      document.getElementById('activeUrl').style.alignItems = 'center';
+      const followBtn = document.getElementById('playerFollowBtn');
+      followBtn.classList.toggle('following', isFollowed);
+      followBtn.title = isFollowed ? 'Deixar de seguir o canal' : 'Seguir canal';
       
       const iframe = document.getElementById('browserIframe');
       iframe.src = embedUrl;
@@ -2739,6 +2746,20 @@
       }
     }
 
+    function togglePlayerFollow() {
+      if (!currentlyPlayingVideo || !currentlyPlayingVideo.author) return;
+      const author = currentlyPlayingVideo.author;
+      if (author === 'LivrePlay' || author === 'Desconhecido') return;
+      
+      const isNowFollowing = toggleFollowChannel(author);
+      const btn = document.getElementById('playerFollowBtn');
+      btn.classList.toggle('following', isNowFollowing);
+      btn.title = isNowFollowing ? 'Deixar de seguir o canal' : 'Seguir canal';
+      
+      document.querySelectorAll(`.channel-follow-btn[data-channel="${author}"]`).forEach(b => {
+        b.classList.toggle('following', isNowFollowing);
+      });
+    }
     function toggleFavoriteCurrent() {
       if (!currentlyPlayingVideo) return;
       const video = currentlyPlayingVideo;
