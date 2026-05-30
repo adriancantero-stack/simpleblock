@@ -1671,10 +1671,12 @@
     // ================= THEME PILLS =================
     const DEFAULT_PILLS = ['🎵 Lofi', '💻 Tecnologia', '🎶 Música', '🎮 Games', '📰 Notícias'];
     let customPills = JSON.parse(localStorage.getItem('livreplay_pills') || '[]');
+    let deletedDefaultPills = JSON.parse(localStorage.getItem('livreplay_deleted_pills') || '[]');
     let activePill = null;
 
     function getAllPills() {
-      return [...DEFAULT_PILLS, ...customPills];
+      const activeDefaults = DEFAULT_PILLS.filter(p => !deletedDefaultPills.includes(p));
+      return [...activeDefaults, ...customPills];
     }
 
     function renderThemePills() {
@@ -1685,8 +1687,7 @@
         btn.className = 'theme-pill focusable' + (activePill === pill ? ' active' : '');
         btn.onclick = () => onPillClick(pill, btn);
 
-        const isCustom = customPills.includes(pill);
-        btn.innerHTML = pill + (isCustom ? ` <button class="theme-pill-remove" onclick="removePill(event,'${pill.replace(/'/g,"\\'")}')">✕</button>` : '');
+        btn.innerHTML = pill + ` <button class="theme-pill-remove" onclick="removePill(event,'${pill.replace(/'/g,"\\'")}')">✕</button>`;
         scroll.appendChild(btn);
       });
 
@@ -1714,8 +1715,15 @@
 
     function removePill(e, pill) {
       e.stopPropagation();
-      customPills = customPills.filter(p => p !== pill);
-      localStorage.setItem('livreplay_pills', JSON.stringify(customPills));
+      if (customPills.includes(pill)) {
+        customPills = customPills.filter(p => p !== pill);
+        localStorage.setItem('livreplay_pills', JSON.stringify(customPills));
+      } else if (DEFAULT_PILLS.includes(pill)) {
+        if (!deletedDefaultPills.includes(pill)) {
+          deletedDefaultPills.push(pill);
+          localStorage.setItem('livreplay_deleted_pills', JSON.stringify(deletedDefaultPills));
+        }
+      }
       if (activePill === pill) activePill = null;
       renderThemePills();
     }
