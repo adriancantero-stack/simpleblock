@@ -1709,7 +1709,7 @@
       renderThemePills();
       // Remove emoji e pesquisa apenas o texto
       const query = pill.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]\s*/gu, '').trim();
-      searchAndRender(query);
+      searchAndRender(query, true);
     }
 
     function removePill(e, pill) {
@@ -1802,7 +1802,7 @@
         div.className = 'fav-channel-avatar';
         div.title = ch.name;
         div.onclick = () => {
-          searchAndRender(ch.name);
+          searchAndRender(ch.name, true);
         };
         div.innerHTML = `
           <div class="fav-channel-circle" style="background:${ch.gradient}">${initials}</div>
@@ -2017,7 +2017,7 @@
     }
 
     // Executa busca sequencial automática com auto-recuperação dinâmica e CORS direto (sem proxy)
-    async function fetchSearch(query) {
+    async function fetchSearch(query, sortByDate = false) {
       let instancesToTry = dynamicInvidiousInstances.length > 0 ? dynamicInvidiousInstances : [...FALLBACK_INSTANCES];
       
       console.log('Tentando buscar em instâncias:', instancesToTry);
@@ -2028,7 +2028,10 @@
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 4000);
           
-          const searchUrl = `${instance}/api/v1/search?q=${encodeURIComponent(query)}&type=video`;
+          let searchUrl = `${instance}/api/v1/search?q=${encodeURIComponent(query)}&type=video`;
+          if (sortByDate) {
+            searchUrl += '&sort_by=upload_date';
+          }
           
           const res = await fetch(searchUrl, { signal: controller.signal });
           clearTimeout(timeoutId);
